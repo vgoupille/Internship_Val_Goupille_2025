@@ -1,0 +1,5 @@
+Module	Section	Sample Name	Source
+FastQC	all_sections	BC_0077_R2	/projects/microsplit/data/processed_data/qc_fastq/multiqc_results_trimmed_individual/R2/BC_0077_R2_fastqc.zip
+FastQC	all_sections	BC_0080_R2	/projects/microsplit/data/processed_data/qc_fastq/multiqc_results_trimmed_individual/R2/BC_0080_R2_fastqc.zip
+FastQC	all_sections	BC_0079_R2	/projects/microsplit/data/processed_data/qc_fastq/multiqc_results_trimmed_individual/R2/BC_0079_R2_fastqc.zip
+FastQC	all_sections	BC_0076_R2	/projects/microsplit/data/processed_data/qc_fastq/multiqc_results_trimmed_individual/R2/BC_0076_R2_fastqc.zip

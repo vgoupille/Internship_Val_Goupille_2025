@@ -1,0 +1,1475 @@
+---
+title: "test"
+author: "Valentin Goupille"
+date: "2025-04-10"
+format:
+  html:
+    toc: true
+    number-sections: true
+    code-fold: false
+    fig-width: 8
+    fig-height: 6
+    fig-format: svg
+    fig-dpi: 300
+    self-contained: true
+jupyter: myenv
+python: myenv
+---
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+#do a plotr for the penguins dataset
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Instead of downloading, let's install and use palmerpenguins package
+try:
+    from palmerpenguins import load_penguins
+    penguins = load_penguins()
+except ImportError:
+    # If palmerpenguins is not installed, install it
+    import sys
+    !{sys.executable} -m pip install palmerpenguins
+    from palmerpenguins import load_penguins
+    penguins = load_penguins()
+
+# Display the first few rows of the dataset
+print(penguins.head())
+
+# Create a scatter plot of bill length vs bill depth, colored by species
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=penguins, x="bill_length_mm", y="bill_depth_mm", 
+                hue="species", style="species", s=100)
+
+# Add title and labels
+plt.title("Bill Length vs Bill Depth by Penguin Species")
+plt.xlabel("Bill Length (mm)")
+plt.ylabel("Bill Depth (mm)")
+
+# Show the plot
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+#other plot for the penguins dataset
+sns.histplot(data=penguins, x="bill_length_mm", hue="species", multiple="stack")
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+# Box plot of body mass by species
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+sns.boxplot(data=penguins, x="species", y="body_mass_g")
+plt.title("Body Mass by Penguin Species")
+plt.xlabel("Species")
+plt.ylabel("Body Mass (g)")
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+# Violin plot of flipper length by species
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+plt.figure(figsize=(10, 6))
+sns.violinplot(data=penguins, x="species", y="flipper_length_mm", palette="Set2")
+plt.title("Distribution of Flipper Length by Penguin Species")
+plt.xlabel("Species")
+plt.ylabel("Flipper Length (mm)")
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+# Pair plot of numerical variables by species
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Create a pair plot to visualize relationships between multiple variables
+sns.pairplot(penguins, hue="species", height=2.5, diag_kind="kde")
+plt.suptitle("Pair Plot of Penguin Measurements by Species", y=1.02)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+# Count plot of penguins by sex and species
+import seaborn as sns
+import matplotlib.pyplot as plt
+import pandas as pd
+
+plt.figure(figsize=(10, 6))
+# Remove rows with missing sex information for this plot
+penguins_clean = penguins.dropna(subset=['sex'])
+sns.countplot(data=penguins_clean, x="species", hue="sex")
+plt.title("Number of Penguins by Species and Sex")
+plt.xlabel("Species")
+plt.ylabel("Count")
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+# Heatmap of correlation between numerical variables
+import seaborn as sns
+import matplotlib.pyplot as plt
+import numpy as np
+
+# Select only numeric columns
+numeric_data = penguins.select_dtypes(include=[np.number])
+# Calculate correlation matrix
+corr_matrix = numeric_data.corr()
+
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap="coolwarm", linewidths=0.5)
+plt.title("Correlation Heatmap of Penguin Measurements")
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Interactive scatter plot using Plotly
+import sys
+import subprocess
+
+# Installer les dépendances nécessaires
+def install_package(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Installation des packages requis
+required_packages = ["plotly", "nbformat>=4.2.0", "ipython"]
+for package in required_packages:
+    try:
+        if package == "plotly":
+            import plotly.express as px
+            import plotly.io as pio
+        elif package == "nbformat>=4.2.0":
+            import nbformat
+            if nbformat.__version__ < "4.2.0":
+                install_package(package)
+        elif package == "ipython":
+            import IPython
+    except ImportError:
+        install_package(package)
+        if package == "plotly":
+            import plotly.express as px
+            import plotly.io as pio
+        elif package == "ipython":
+            import IPython
+
+# Configurer le rendu pour fonctionner dans Quarto
+import plotly.io as pio
+pio.renderers.default = "notebook"
+
+# Filter out NaN values before creating the plot
+penguins_clean = penguins.dropna(subset=["bill_length_mm", "bill_depth_mm", "body_mass_g"])
+
+# Create an interactive scatter plot
+fig = px.scatter(penguins_clean, 
+                x="bill_length_mm", 
+                y="bill_depth_mm", 
+                color="species",
+                size="body_mass_g", 
+                hover_name="species",
+                hover_data=["island", "sex", "flipper_length_mm"],
+                title="Interactive Scatter Plot of Bill Dimensions",
+                labels={"bill_length_mm": "Bill Length (mm)",
+                        "bill_depth_mm": "Bill Depth (mm)"},
+                size_max=15)
+
+# Add trendlines for each species
+fig.update_traces(marker=dict(line=dict(width=1, color='DarkSlateGrey')))
+fig.update_layout(legend_title_text='Species')
+
+# Display the plot using IPython display
+from IPython.display import display
+display(fig)
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# 3D scatter plot with Plotly
+try:
+    import plotly.express as px
+except ImportError:
+    pass  # Already installed in previous chunk
+
+# Filter out NaN values before creating the plot
+penguins_clean_3d = penguins.dropna(subset=["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g"])
+
+# Create a 3D scatter plot
+fig_3d = px.scatter_3d(penguins_clean_3d, 
+                      x="bill_length_mm", 
+                      y="bill_depth_mm", 
+                      z="flipper_length_mm",
+                      color="species",
+                      size="body_mass_g",
+                      hover_name="species",
+                      opacity=0.7,
+                      title="3D Visualization of Penguin Measurements")
+
+# Improve layout
+fig_3d.update_layout(
+    scene = dict(
+        xaxis_title='Bill Length (mm)',
+        yaxis_title='Bill Depth (mm)',
+        zaxis_title='Flipper Length (mm)'
+    )
+)
+
+# Display the plot
+fig_3d.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Interactive visualization with Bokeh
+try:
+    from bokeh.plotting import figure, show
+    from bokeh.io import output_notebook
+    from bokeh.transform import factor_cmap
+    from bokeh.models import ColumnDataSource, HoverTool
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install bokeh
+    from bokeh.plotting import figure, show
+    from bokeh.io import output_notebook
+    from bokeh.transform import factor_cmap
+    from bokeh.models import ColumnDataSource, HoverTool
+
+# Clean data
+penguins_bokeh = penguins.dropna(subset=["bill_length_mm", "flipper_length_mm", "species"])
+
+# Prepare data
+source = ColumnDataSource(penguins_bokeh)
+
+# Set up color mapping
+species_list = penguins_bokeh['species'].unique().tolist()
+colors = ["#1f77b4", "#ff7f0e", "#2ca02c"]  # Different color for each species
+
+# Create figure
+p = figure(title="Interactive Bokeh Plot: Bill Length vs Flipper Length",
+           x_axis_label="Bill Length (mm)", 
+           y_axis_label="Flipper Length (mm)",
+           height=400, width=700)
+
+# Add scatter points with different colors by species
+scatter = p.scatter(x="bill_length_mm", y="flipper_length_mm", 
+                    size=10, source=source,
+                    color=factor_cmap('species', palette=colors, factors=species_list),
+                    legend_field="species")
+
+# Add hover functionality
+hover = HoverTool()
+hover.tooltips = [
+    ("Species", "@species"),
+    ("Island", "@island"),
+    ("Bill Length", "@bill_length_mm mm"),
+    ("Flipper Length", "@flipper_length_mm mm"),
+    ("Body Mass", "@body_mass_g g")
+]
+p.add_tools(hover)
+
+# Configure legend
+p.legend.location = "top_left"
+p.legend.click_policy = "hide"
+
+# Display the plot
+output_notebook()
+show(p)
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Interactive visualization with Altair
+try:
+    import altair as alt
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install altair
+    import altair as alt
+
+# Clean data
+penguins_altair = penguins.dropna(subset=["bill_length_mm", "bill_depth_mm", "species", "sex"])
+
+# Set Altair to use a renderer compatible with Quarto/Jupyter
+alt.renderers.enable('default')
+
+# Create an interactive scatter plot with selection
+selection = alt.selection_interval(bind='scales')
+
+# Create the chart
+chart = alt.Chart(penguins_altair).mark_point(size=100).encode(
+    x=alt.X('bill_length_mm', title='Bill Length (mm)'),
+    y=alt.Y('bill_depth_mm', title='Bill Depth (mm)'),
+    color='species:N',
+    shape='sex:N',
+    tooltip=['species', 'island', 'bill_length_mm', 'bill_depth_mm', 'flipper_length_mm', 'body_mass_g', 'sex']
+).properties(
+    title='Bill Dimensions by Species and Sex',
+    width=600,
+    height=400
+).add_selection(
+    selection
+).interactive()
+
+# Show the chart
+chart
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 7
+#| fig-format: svg
+
+# Visualization using plotnine (Python equivalent of ggplot2)
+try:
+    from plotnine import *
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install plotnine
+    from plotnine import *
+
+# Clean data
+penguins_clean_p9 = penguins.dropna(subset=["bill_length_mm", "flipper_length_mm", "species", "sex"])
+
+# Create a ggplot-like visualization
+plot = (ggplot(penguins_clean_p9, aes(x='flipper_length_mm', y='bill_length_mm', 
+                                      color='species', shape='sex')) +
+        geom_point(size=3, alpha=0.7) +
+        stat_smooth(method='lm', se=True, alpha=0.2) +
+        labs(title='Bill Length vs Flipper Length by Species and Sex',
+             x='Flipper Length (mm)',
+             y='Bill Length (mm)') +
+        theme_minimal() +
+        facet_wrap('~ island') +  # Create separate panels by island
+        scale_color_brewer(type='qual', palette='Set1'))
+
+print(plot)
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+
+# Interactive visualization with HoloViews/hvPlot
+try:
+    import holoviews as hv
+    import hvplot.pandas
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install holoviews hvplot
+    import holoviews as hv
+    import hvplot.pandas
+
+# Initialize HoloViews extension
+hv.extension('bokeh')
+
+# Clean data
+penguins_clean_hv = penguins.dropna(subset=["bill_length_mm", "body_mass_g", "species"])
+
+# Create interactive scatter plot with hvPlot
+scatter_plot = penguins_clean_hv.hvplot.scatter(
+    x='bill_length_mm',
+    y='body_mass_g',
+    by='species',
+    hover_cols=['island', 'sex', 'flipper_length_mm'],
+    height=400,
+    width=700,
+    title='Bill Length vs Body Mass by Species',
+    xlabel='Bill Length (mm)',
+    ylabel='Body Mass (g)',
+    size=80,
+    legend='top',
+    grid=True
+)
+
+# Display the plot
+scatter_plot
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 7
+#| fig-format: svg
+
+# Animated visualization with Matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+from matplotlib.animation import FuncAnimation
+import numpy as np
+
+# Clean data and prepare for animation
+penguins_anim = penguins.dropna(subset=["bill_length_mm", "bill_depth_mm", "species"])
+species_list = penguins_anim['species'].unique()
+colors = {"Adelie": "red", "Gentoo": "blue", "Chinstrap": "green"}
+
+# Create figure and axes
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Initialize scatter plot
+scatter = ax.scatter([], [], c=[], s=100, alpha=0.7)
+ax.set_xlim(penguins_anim['bill_length_mm'].min() - 2, 
+           penguins_anim['bill_length_mm'].max() + 2)
+ax.set_ylim(penguins_anim['bill_depth_mm'].min() - 1, 
+           penguins_anim['bill_depth_mm'].max() + 1)
+ax.set_xlabel('Bill Length (mm)')
+ax.set_ylabel('Bill Depth (mm)')
+ax.set_title('Penguin Bill Dimensions by Species (Animated)')
+
+# Create legend elements
+legend_elements = [plt.Line2D([0], [0], marker='o', color='w', 
+                             markerfacecolor=colors[s], markersize=10, label=s) 
+                  for s in species_list]
+ax.legend(handles=legend_elements, loc='upper right')
+
+# Define update function for animation
+def update(frame):
+    # Filter data for the current species
+    species = species_list[frame % len(species_list)]
+    data = penguins_anim[penguins_anim['species'] == species]
+    
+    # Update data
+    scatter.set_offsets(np.column_stack((data['bill_length_mm'], data['bill_depth_mm'])))
+    scatter.set_color(colors[species])
+    
+    ax.set_title(f'Penguin Bill Dimensions: {species}')
+    return scatter,
+
+# Create animation
+ani = FuncAnimation(fig, update, frames=len(species_list), 
+                   interval=1000, blit=True, repeat=True)
+
+# Save animation as GIF
+try:
+    from IPython.display import HTML
+    HTML(ani.to_jshtml())
+except:
+    plt.close()  # Close the animation figure if it fails
+
+# Show the plot with all species for static display
+plt.figure(figsize=(10, 6))
+for species in species_list:
+    data = penguins_anim[penguins_anim['species'] == species]
+    plt.scatter(data['bill_length_mm'], data['bill_depth_mm'], 
+               label=species, color=colors[species], s=100, alpha=0.7)
+plt.xlabel('Bill Length (mm)')
+plt.ylabel('Bill Depth (mm)')
+plt.title('Penguin Bill Dimensions by Species (Static Version)')
+plt.legend()
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+from plotnine import ggplot, geom_point, aes, stat_smooth, facet_wrap
+from plotnine.data import mtcars
+
+(
+    ggplot(mtcars, aes("wt", "mpg", color="factor(gear)"))
+    + geom_point()
+    + stat_smooth(method="lm")
+    + facet_wrap("gear")
+)
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+
+# Seaborn avec style ggplot et une approche plus déclarative
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+# Configurer le style pour ressembler à ggplot
+plt.style.use('ggplot')
+
+# Nettoyer les données
+penguins_clean_sns = penguins.dropna(subset=["bill_length_mm", "flipper_length_mm", "species", "sex"])
+
+# Création d'un FacetGrid (similaire à facet_wrap de ggplot)
+g = sns.FacetGrid(penguins_clean_sns, col="island", hue="species", height=4, aspect=1.2)
+
+# Mapper des graphiques sur chaque facette
+g.map(sns.scatterplot, "flipper_length_mm", "bill_length_mm", alpha=0.7, s=80)
+
+# Ajouter une ligne de régression
+g.map(sns.regplot, "flipper_length_mm", "bill_length_mm", scatter=False, ci=95)
+
+# Améliorer l'esthétique
+g.add_legend(title="Espèce")
+g.set_axis_labels("Longueur des ailerons (mm)", "Longueur du bec (mm)")
+g.set_titles("Île: {col_name}")
+g.fig.suptitle("Relation entre longueur du bec et des ailerons par île", y=1.05, fontsize=16)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 6
+#| fig-format: svg
+
+# Plotly Express - Approche similaire à ggplot avec interactivité
+try:
+    import plotly.express as px
+except ImportError:
+    pass  # Déjà installé dans les chunks précédents
+
+# Nettoyer les données
+penguins_clean_px = penguins.dropna(subset=["bill_length_mm", "flipper_length_mm", "species", "sex", "island"])
+
+# Créer un graphique de type ggplot avec facettes
+fig = px.scatter(
+    penguins_clean_px, 
+    x="flipper_length_mm", 
+    y="bill_length_mm",
+    color="species",
+    symbol="sex",
+    facet_col="island",
+    trendline="ols",
+    title="Analyse des dimensions corporelles des pingouins par île",
+    labels={"flipper_length_mm": "Longueur des ailerons (mm)",
+            "bill_length_mm": "Longueur du bec (mm)",
+            "species": "Espèce",
+            "sex": "Sexe"},
+    category_orders={"island": ["Torgersen", "Biscoe", "Dream"]},
+    width=900, height=500
+)
+
+# Améliorer le design
+fig.update_layout(
+    legend=dict(orientation="h", y=-0.15, x=0.5, xanchor="center"),
+    template="ggplot2"  # Utiliser un thème similaire à ggplot
+)
+
+# Afficher le graphique
+fig.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 7
+#| fig-format: svg
+
+# Matplotlib orienté objet avec style ggplot
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.gridspec import GridSpec
+
+# Configurer le style
+plt.style.use('ggplot')
+
+# Nettoyer les données
+penguins_clean_mpl = penguins.dropna(subset=["bill_length_mm", "flipper_length_mm", "species", "island"])
+
+# Obtenir les îles uniques
+islands = penguins_clean_mpl['island'].unique()
+
+# Créer la figure avec style ggplot
+fig = plt.figure(figsize=(12, 8))
+gs = GridSpec(2, 2, figure=fig)
+
+# Créer une palette de couleurs
+colors = {'Adelie': '#FF5733', 'Gentoo': '#33A1FF', 'Chinstrap': '#33FF57'}
+
+# Créer des sous-graphiques pour chaque île (similaire à facet_wrap)
+for i, island in enumerate(islands):
+    ax = fig.add_subplot(gs[i//2, i%2])
+    
+    # Filtrer les données
+    island_data = penguins_clean_mpl[penguins_clean_mpl['island'] == island]
+    
+    # Tracer les points pour chaque espèce
+    for species in island_data['species'].unique():
+        species_data = island_data[island_data['species'] == species]
+        ax.scatter(species_data['flipper_length_mm'], species_data['bill_length_mm'], 
+                  label=species, alpha=0.7, s=70, color=colors[species])
+        
+        # Ajouter une ligne de régression (similaire à geom_smooth)
+        if len(species_data) > 2:  # Besoin d'au moins 2 points pour la régression
+            x = species_data['flipper_length_mm']
+            y = species_data['bill_length_mm']
+            z = np.polyfit(x, y, 1)
+            p = np.poly1d(z)
+            x_range = np.linspace(x.min(), x.max(), 100)
+            ax.plot(x_range, p(x_range), '--', color=colors[species], alpha=0.8)
+    
+    # Configurer le graphique
+    ax.set_xlabel('Longueur des ailerons (mm)')
+    ax.set_ylabel('Longueur du bec (mm)')
+    ax.set_title(f'Île: {island}')
+    
+    # Ajouter une légende uniquement au premier graphique
+    if i == 0:
+        ax.legend(title="Espèce")
+
+fig.suptitle('Analyse des dimensions corporelles des pingouins par île', fontsize=16, y=0.98)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Utilisation de palettes de couleurs similaires à R en Python
+import matplotlib.pyplot as plt
+import seaborn as sns
+import numpy as np
+import pandas as pd
+
+# Nettoyer les données
+penguins_clean_color = penguins.dropna(subset=["bill_length_mm", "body_mass_g", "species"])
+
+# Créer une figure avec plusieurs sous-graphiques
+fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+plt.subplots_adjust(hspace=0.4, wspace=0.3)
+
+# 1. Palette ColorBrewer (similaire à RColorBrewer)
+try:
+    from palettable.colorbrewer.qualitative import Set1_3, Dark2_3
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install palettable
+    from palettable.colorbrewer.qualitative import Set1_3, Dark2_3
+
+# Utilisation de la palette Set1 (très populaire dans R)
+ax = axes[0, 0]
+for i, species in enumerate(penguins_clean_color['species'].unique()):
+    subset = penguins_clean_color[penguins_clean_color['species'] == species]
+    ax.scatter(subset['bill_length_mm'], subset['body_mass_g'], 
+               label=species, color=Set1_3.hex_colors[i], s=60, alpha=0.7)
+ax.set_title('Palette ColorBrewer "Set1"')
+ax.set_xlabel('Longueur du bec (mm)')
+ax.set_ylabel('Masse corporelle (g)')
+ax.legend()
+
+# 2. Palette viridis (populaire en R et disponible directement dans matplotlib)
+ax = axes[0, 1]
+# Création d'une catégorie numérique pour mapper les couleurs
+species_to_num = {sp: i for i, sp in enumerate(penguins_clean_color['species'].unique())}
+penguins_clean_color['species_num'] = penguins_clean_color['species'].map(species_to_num)
+
+scatter = ax.scatter(penguins_clean_color['bill_length_mm'], 
+                    penguins_clean_color['body_mass_g'],
+                    c=penguins_clean_color['species_num'], 
+                    cmap='viridis', 
+                    s=60, alpha=0.7)
+
+# Légende manuelle pour viridis
+handles, labels = scatter.legend_elements(prop="colors", alpha=0.7)
+legend = ax.legend(handles, penguins_clean_color['species'].unique(), loc="upper left", title="Espèce")
+ax.set_title('Palette "viridis"')
+ax.set_xlabel('Longueur du bec (mm)')
+ax.set_ylabel('Masse corporelle (g)')
+
+# 3. Palette Wes Anderson (similaire au package wesanderson en R)
+ax = axes[1, 0]
+try:
+    from palettable.wesanderson import Zissou_5
+except ImportError:
+    # Définir manuellement une palette inspirée de Wes Anderson si palettable n'a pas la palette
+    Zissou_5 = type('obj', (object,), {
+        'hex_colors': ['#3B9AB2', '#78B7C5', '#EBCC2A', '#E1AF00', '#F21A00']
+    })
+
+# Utilisation de la palette Zissou
+wes_colors = Zissou_5.hex_colors[:3]  # Prendre 3 couleurs pour les 3 espèces
+for i, species in enumerate(penguins_clean_color['species'].unique()):
+    subset = penguins_clean_color[penguins_clean_color['species'] == species]
+    ax.scatter(subset['bill_length_mm'], subset['body_mass_g'], 
+               label=species, color=wes_colors[i], s=60, alpha=0.7)
+ax.set_title('Palette Wes Anderson "Zissou"')
+ax.set_xlabel('Longueur du bec (mm)')
+ax.set_ylabel('Masse corporelle (g)')
+ax.legend()
+
+# 4. Palette scientifique (similaire à ggsci en R)
+ax = axes[1, 1]
+try:
+    from palettable.scientific import sequential as sci_seq
+    sci_palette = sci_seq.Devon_20.hex_colors
+except ImportError:
+    # Palette scientifique alternative de seaborn
+    sci_palette = sns.color_palette("husl", 3)
+    sci_palette = [sns.mpl.colors.rgb2hex(col) for col in sci_palette]
+
+# Utilisation de la palette scientifique
+for i, species in enumerate(penguins_clean_color['species'].unique()):
+    subset = penguins_clean_color[penguins_clean_color['species'] == species]
+    ax.scatter(subset['bill_length_mm'], subset['body_mass_g'], 
+               label=species, color=sci_palette[i], s=60, alpha=0.7)
+ax.set_title('Palette scientifique "Devon"')
+ax.set_xlabel('Longueur du bec (mm)')
+ax.set_ylabel('Masse corporelle (g)')
+ax.legend()
+
+fig.suptitle('Comparaison de palettes de couleurs similaires à celles de R', 
+             fontsize=16, y=0.98)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Démonstration de palettes supplémentaires avec seaborn (équivalent à diverses palettes R)
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Nettoyer les données
+penguins_clean_color = penguins.dropna(subset=["bill_length_mm", "bill_depth_mm", "species"])
+
+# Création d'une figure avec plusieurs palettes de couleurs R-like
+f, axes = plt.subplots(3, 2, figsize=(14, 12))
+plt.subplots_adjust(hspace=0.4)
+
+# Liste des palettes à démontrer
+palettes = [
+    ('Set2', 'Similaire à RColorBrewer Set2'),
+    ('tab10', 'Similaire à R tableau10'),
+    ('crest', 'Similaire à viridisLite en R'),
+    ('mako', 'Similaire à viridisLite en R'),
+    ('rocket', 'Similaire à viridisLite en R'),
+    ('icefire', 'Similaire à colorcet en R')
+]
+
+# Créer un scatter plot pour chaque palette
+for (i, (palette, title)) in enumerate(palettes):
+    ax = axes[i//2, i%2]
+    
+    # Utiliser la palette pour le graphique
+    sns.scatterplot(
+        data=penguins_clean_color, 
+        x="bill_length_mm", 
+        y="bill_depth_mm",
+        hue="species", 
+        palette=palette,
+        s=80, 
+        alpha=0.7,
+        ax=ax
+    )
+    
+    # Configurer le graphique
+    ax.set_title(title)
+    ax.set_xlabel("Longueur du bec (mm)")
+    ax.set_ylabel("Profondeur du bec (mm)")
+    ax.legend(title="Espèce")
+
+f.suptitle("Palettes de couleurs inspirées de packages R", fontsize=16, y=0.98)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Visualisation avec Plotly et palettes de couleurs personnalisées
+try:
+    import plotly.express as px
+    import plotly.graph_objects as go
+except ImportError:
+    pass  # Déjà installé dans les chunks précédents
+
+# Nettoyer les données
+penguins_clean_px = penguins.dropna(subset=["bill_length_mm", "flipper_length_mm", "species", "island"])
+
+# Définition de palettes personnalisées inspirées de packages R
+custom_palettes = {
+    "jco": ["#0073C2", "#EFC000", "#868686", "#CD534C", "#7AA6DC"],  # Journal Clinical Oncology (ggsci)
+    "nejm": ["#BC3C29", "#0072B5", "#E18727", "#20854E", "#7876B1"],  # New England Journal of Medicine (ggsci)
+    "lancet": ["#00468B", "#ED0000", "#42B540", "#0099B4", "#925E9F"],  # Lancet (ggsci)
+    "futurama": ["#FF6F00", "#C71000", "#008EA0", "#8A4198", "#5A9599"],  # Inspiré de Futurama (généré par IA)
+    "mondrian": ["#D0202E", "#3360A9", "#F3C91D", "#1A1A1A", "#D6D6D6"]  # Inspiré de Piet Mondrian (généré par IA)
+}
+
+# Créer une figure avec sous-graphiques
+fig = go.Figure()
+
+# Ajouter un bouton pour chaque palette
+buttons = []
+
+for i, (palette_name, palette_colors) in enumerate(custom_palettes.items()):
+    # Ajouter des traces pour chaque espèce avec la palette actuelle
+    for j, species in enumerate(penguins_clean_px['species'].unique()):
+        species_data = penguins_clean_px[penguins_clean_px['species'] == species]
+        
+        # Utiliser modulo pour s'assurer que nous ne dépassons pas le nombre de couleurs disponibles
+        color_idx = j % len(palette_colors)
+        
+        fig.add_trace(
+            go.Scatter(
+                x=species_data['flipper_length_mm'],
+                y=species_data['bill_length_mm'],
+                mode='markers',
+                marker=dict(color=palette_colors[color_idx], size=12),
+                name=species,
+                text=species_data['island'],
+                hovertemplate="<b>%{text}</b><br>Espèce: " + species + 
+                              "<br>Longueur des ailerons: %{x} mm<br>Longueur du bec: %{y} mm",
+                visible=(i==0)  # Seule la première palette est visible par défaut
+            )
+        )
+    
+    # Créer un bouton pour cette palette
+    visible_list = [True if i==btn_idx else False for btn_idx in range(len(custom_palettes)) 
+                    for _ in range(len(penguins_clean_px['species'].unique()))]
+    
+    buttons.append(dict(
+        label=palette_name,
+        method="update",
+        args=[{"visible": visible_list},
+              {"title": f"Palette: {palette_name} (inspirée de packages R)"}]
+    ))
+
+# Ajouter le menu de sélection de palette
+fig.update_layout(
+    updatemenus=[{
+        "buttons": buttons,
+        "direction": "down",
+        "showactive": True,
+        "x": 0.1,
+        "y": 1.15,
+        "xanchor": "left",
+        "yanchor": "top"
+    }],
+    title="Palette: jco (inspirée de packages R)",
+    xaxis_title="Longueur des ailerons (mm)",
+    yaxis_title="Longueur du bec (mm)",
+    height=600,
+    width=800,
+    annotations=[
+        dict(text="Choisir une palette:", x=0, y=1.12, xref="paper", yref="paper",
+             showarrow=False, font=dict(size=14))
+    ]
+)
+
+fig.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 12
+#| fig-height: 10
+#| fig-format: svg
+
+# Analyse d'expression différentielle - Exemples de visualisations
+import sys
+import subprocess
+
+# Installer les dépendances nécessaires
+def install_package(package):
+    subprocess.check_call([sys.executable, "-m", "pip", "install", package])
+
+# Liste des packages requis
+required_packages = ["numpy", "pandas", "matplotlib", "seaborn", "scipy", "scikit-learn"]
+
+# Installation des packages manquants
+for package in required_packages:
+    try:
+        if package == "scikit-learn":
+            from sklearn.decomposition import PCA
+        elif package == "numpy":
+            import numpy as np
+        elif package == "pandas":
+            import pandas as pd
+        elif package == "matplotlib":
+            import matplotlib.pyplot as plt
+        elif package == "seaborn":
+            import seaborn as sns
+        elif package == "scipy":
+            from scipy import stats
+    except ImportError:
+        print(f"Installation de {package}...")
+        install_package(package)
+        if package == "scikit-learn":
+            from sklearn.decomposition import PCA
+        elif package == "numpy":
+            import numpy as np
+        elif package == "pandas":
+            import pandas as pd
+        elif package == "matplotlib":
+            import matplotlib.pyplot as plt
+        elif package == "seaborn":
+            import seaborn as sns
+        elif package == "scipy":
+            from scipy import stats
+
+import warnings
+warnings.filterwarnings('ignore')
+
+# Création de données simulées d'expression différentielle
+np.random.seed(42)
+
+# Nombre de gènes et d'échantillons
+n_genes = 1000
+n_samples_per_condition = 5
+
+# Créer les noms de gènes et d'échantillons
+gene_ids = [f"GENE_{i}" for i in range(1, n_genes + 1)]
+sample_ids = [f"Ctrl_{i}" for i in range(1, n_samples_per_condition + 1)] + \
+             [f"Treat_{i}" for i in range(1, n_samples_per_condition + 1)]
+
+# Simuler les expressions avec expression différentielle pour certains gènes
+base_expression = np.exp(np.random.normal(loc=5, scale=2, size=n_genes))
+expressions = []
+
+# Créer une matrice d'expression: lignes=gènes, colonnes=échantillons
+for i in range(n_genes):
+    # Expression dans le groupe contrôle
+    ctrl_expr = np.random.normal(loc=base_expression[i], scale=base_expression[i]*0.2, size=n_samples_per_condition)
+    
+    # Déterminer si ce gène a une expression différentielle
+    is_de = np.random.random() < 0.1  # 10% des gènes sont différentiellement exprimés
+    fold_change = np.random.uniform(1.5, 3) if is_de else 1.0
+    direction = np.random.choice([-1, 1]) if is_de else 0
+    
+    # Expression dans le groupe traité (avec effet potentiel)
+    if direction == 1:
+        treat_expr = np.random.normal(loc=base_expression[i]*fold_change, scale=base_expression[i]*0.2, size=n_samples_per_condition)
+    else:
+        treat_expr = np.random.normal(loc=base_expression[i]/fold_change if fold_change > 1 else base_expression[i], 
+                                     scale=base_expression[i]*0.2, size=n_samples_per_condition)
+    
+    # Concaténer les expressions des deux groupes
+    expressions.append(np.concatenate([ctrl_expr, treat_expr]))
+
+# Convertir en DataFrame
+expr_df = pd.DataFrame(expressions, index=gene_ids, columns=sample_ids)
+
+# S'assurer qu'il n'y a pas de valeurs négatives dans les données d'expression
+expr_df = expr_df.clip(lower=0.01)  # Remplacer les valeurs négatives par 0.01
+
+# Calculer les moyennes par condition
+ctrl_mean = expr_df.filter(regex="Ctrl").mean(axis=1)
+treat_mean = expr_df.filter(regex="Treat").mean(axis=1)
+
+# Calculer les statistiques pour chaque gène
+results = pd.DataFrame(index=gene_ids)
+results['baseMean'] = (ctrl_mean + treat_mean) / 2
+results['log2FoldChange'] = np.log2(treat_mean / ctrl_mean)
+results['pvalue'] = [stats.ttest_ind(
+    expr_df.iloc[i, :n_samples_per_condition], 
+    expr_df.iloc[i, n_samples_per_condition:]
+)[1] for i in range(n_genes)]
+
+# Correction pour tests multiples (Benjamini-Hochberg)
+# Implémentation manuelle de la méthode Benjamini-Hochberg
+def adjust_pvalues_bh(pvalues):
+    """
+    Correction de Benjamini-Hochberg pour les tests multiples
+    """
+    n = len(pvalues)
+    if n <= 0:
+        return []
+    
+    # Convertir en tableau numpy pour faciliter le traitement
+    pvals_array = np.array(pvalues)
+    
+    # Créer les rangs (du plus petit au plus grand)
+    ranks = np.argsort(pvals_array)
+    sorted_pvals = pvals_array[ranks]
+    
+    # Calculer la p-value ajustée
+    adjusted_pvals = np.empty_like(sorted_pvals)
+    
+    # p-value ajustée pour la plus grande p-value est la même
+    adjusted_pvals[-1] = sorted_pvals[-1]
+    
+    # Commencer par la deuxième plus grande p-value et aller en diminuant
+    for i in range(n-2, -1, -1):
+        adjusted_pvals[i] = min(sorted_pvals[i] * n / (i+1), adjusted_pvals[i+1])
+    
+    # Remettre dans l'ordre original
+    original_order = np.argsort(ranks)
+    return adjusted_pvals[original_order]
+
+# Appliquer la correction
+results['padj'] = adjust_pvalues_bh(results['pvalue'])
+results['-log10(padj)'] = -np.log10(results['padj'])
+
+# Identifier les gènes significativement différentiellement exprimés
+results['significant'] = (results['padj'] < 0.05) & (abs(results['log2FoldChange']) > 1)
+
+# Résumé des résultats
+print(f"Total de gènes: {n_genes}")
+print(f"Gènes différentiellement exprimés: {results['significant'].sum()}")
+
+# Création de plusieurs visualisations sur une grille
+fig = plt.figure(figsize=(14, 12))
+gs = fig.add_gridspec(2, 2, hspace=0.4, wspace=0.3)
+
+# 1. Volcano Plot
+ax1 = fig.add_subplot(gs[0, 0])
+volcano = ax1.scatter(
+    results['log2FoldChange'], 
+    results['-log10(padj)'],
+    c=results['significant'].map({True: 'red', False: 'grey'}),
+    alpha=0.6, s=15
+)
+ax1.axhline(y=-np.log10(0.05), color='blue', linestyle='--', alpha=0.7)
+ax1.axvline(x=1, color='blue', linestyle='--', alpha=0.7)
+ax1.axvline(x=-1, color='blue', linestyle='--', alpha=0.7)
+ax1.set_title('Volcano Plot')
+ax1.set_xlabel('log2 Fold Change')
+ax1.set_ylabel('-log10(Adjusted p-value)')
+
+# 2. MA Plot
+ax2 = fig.add_subplot(gs[0, 1])
+ma = ax2.scatter(
+    np.log2(results['baseMean']), 
+    results['log2FoldChange'],
+    c=results['significant'].map({True: 'red', False: 'grey'}),
+    alpha=0.6, s=15
+)
+ax2.axhline(y=0, color='blue', linestyle='-', alpha=0.7)
+ax2.set_title('MA Plot')
+ax2.set_xlabel('log2 Mean Expression')
+ax2.set_ylabel('log2 Fold Change')
+
+# 3. Heatmap des top gènes différentiellement exprimés
+ax3 = fig.add_subplot(gs[1, 0])
+# Sélectionner les top gènes différentiellement exprimés
+top_genes = results[results['significant']].sort_values(by='padj').index[:30]
+if len(top_genes) == 0:  # Au cas où aucun gène n'est significatif
+    top_genes = results.sort_values(by='padj').index[:30]
+
+# Normaliser les données d'expression pour le heatmap (Z-score)
+top_expr = expr_df.loc[top_genes]
+top_expr_z = pd.DataFrame(
+    stats.zscore(top_expr.values, axis=1),
+    index=top_expr.index,
+    columns=top_expr.columns
+)
+
+# Créer l'heatmap
+sns.heatmap(top_expr_z, cmap='coolwarm', center=0, ax=ax3, cbar_kws={'label': 'Z-score'})
+ax3.set_title('Heatmap des Top Gènes DE')
+ax3.set_xlabel('Échantillons')
+ax3.set_ylabel('Gènes')
+
+# 4. PCA Plot
+ax4 = fig.add_subplot(gs[1, 1])
+# Préparer les données pour la PCA
+X = expr_df.T  # Transposer pour avoir les échantillons en lignes et les gènes en colonnes
+
+# Log-transformation avec vérification des valeurs problématiques
+X_log = np.log2(X + 1)  # Ajouter 1 pour éviter log(0)
+
+# Vérifier et remplacer les valeurs infinies ou NaN
+X_log_clean = X_log.copy()
+X_log_clean = X_log_clean.replace([np.inf, -np.inf], np.nan)
+X_log_clean = X_log_clean.fillna(X_log_clean.min().min())  # Remplacer NaN par la plus petite valeur
+
+# Calculer la PCA
+pca = PCA(n_components=2)
+pca_result = pca.fit_transform(X_log_clean)
+
+# Créer un DataFrame avec les résultats PCA
+pca_df = pd.DataFrame(data=pca_result, columns=['PC1', 'PC2'], index=X.index)
+pca_df['condition'] = pca_df.index.map(lambda x: 'Control' if 'Ctrl' in x else 'Treatment')
+
+# Tracer le graphique PCA
+sns.scatterplot(
+    data=pca_df, x='PC1', y='PC2', 
+    hue='condition', style='condition', s=100,
+    palette={'Control': 'blue', 'Treatment': 'red'},
+    ax=ax4
+)
+ax4.set_title('PCA Plot')
+ax4.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%} variance expliquée)')
+ax4.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%} variance expliquée)')
+
+# Ajouter un titre général
+fig.suptitle('Analyse d\'Expression Différentielle', fontsize=16, y=0.98)
+plt.tight_layout()
+plt.show()
+```
+
+```{python}
+#| cache: true
+#| fig-width: 10
+#| fig-height: 8
+#| fig-format: svg
+
+# Visualisations Interactives d'Expression Différentielle avec Plotly
+try:
+    import plotly.graph_objects as go
+    import plotly.express as px
+    from plotly.subplots import make_subplots
+    import plotly.figure_factory as ff
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install plotly
+    import plotly.graph_objects as go
+    import plotly.express as px
+    from plotly.subplots import make_subplots
+    import plotly.figure_factory as ff
+
+# Utiliser les données d'expression différentielle du chunk précédent
+
+# 1. Volcano Plot Interactif
+fig_volcano = px.scatter(
+    results.reset_index(), 
+    x='log2FoldChange', 
+    y='-log10(padj)',
+    color='significant',
+    hover_name='index',  # Montre l'ID du gène au survol
+    hover_data=['baseMean', 'pvalue', 'padj'],
+    color_discrete_map={True: 'red', False: 'grey'},
+    opacity=0.7,
+    title="Volcano Plot Interactif",
+    labels={
+        'log2FoldChange': 'log2 Fold Change', 
+        '-log10(padj)': '-log10(p-value ajustée)',
+        'significant': 'Significatif'
+    }
+)
+
+# Ajouter des lignes de seuil
+fig_volcano.add_shape(
+    type='line', line=dict(dash='dash', color='blue'),
+    x0=-6, x1=6, y0=-np.log10(0.05), y1=-np.log10(0.05)  # Ligne horizontale pour p-value
+)
+fig_volcano.add_shape(
+    type='line', line=dict(dash='dash', color='blue'),
+    x0=1, x1=1, y0=0, y1=7  # Ligne verticale pour FC positif
+)
+fig_volcano.add_shape(
+    type='line', line=dict(dash='dash', color='blue'),
+    x0=-1, x1=-1, y0=0, y1=7  # Ligne verticale pour FC négatif
+)
+
+# Améliorer la mise en page
+fig_volcano.update_layout(
+    legend_title_text='Significatif',
+    xaxis_range=[-6, 6],
+    yaxis_range=[0, 7]
+)
+
+# Afficher le volcano plot
+fig_volcano.show()
+
+# 2. Heatmap Interactif avec Clustering Hiérarchique
+# Sélectionner les gènes pour la heatmap
+if results['significant'].sum() > 5:
+    heat_genes = results[results['significant']].sort_values(by='padj').index[:40]
+else:
+    heat_genes = results.sort_values(by='padj').index[:40]
+
+# Préparer les données pour la heatmap
+heat_data = expr_df.loc[heat_genes]
+heat_data_z = pd.DataFrame(
+    stats.zscore(heat_data.values, axis=1),
+    index=heat_data.index,
+    columns=heat_data.columns
+)
+
+# Créer la heatmap avec clustering
+try:
+    fig_heatmap = ff.create_dendrogram(
+        heat_data_z, orientation='left',
+        labels=heat_data_z.index
+    )
+
+    # Réorganiser les données selon le clustering
+    dendro_leaves = fig_heatmap['layout']['yaxis']['ticktext']
+    dendro_idx = fig_heatmap['layout']['yaxis']['tickvals']
+    heat_data_z_clustered = heat_data_z.loc[dendro_leaves]
+except:
+    # Gérer les erreurs potentielles de clustering
+    print("Impossible de créer le dendrogramme. Utilisation des données sans clustering.")
+    heat_data_z_clustered = heat_data_z
+
+# Créer la heatmap avec les données clustérisées ou non
+fig_heatmap = go.Figure(data=go.Heatmap(
+    z=heat_data_z_clustered.values,
+    x=heat_data_z_clustered.columns,
+    y=heat_data_z_clustered.index,
+    colorscale='RdBu_r',
+    zmid=0,
+    colorbar=dict(title='Z-score')
+))
+
+# Améliorer la mise en page
+fig_heatmap.update_layout(
+    title='Heatmap des Gènes Différentiellement Exprimés',
+    xaxis_title='Échantillons',
+    yaxis_title='Gènes',
+    height=800,
+    width=800
+)
+
+# Afficher la heatmap
+fig_heatmap.show()
+
+# 3. PCA Plot Interactif
+pca_df_reset = pca_df.reset_index().rename(columns={'index': 'sample'})
+
+fig_pca = px.scatter(
+    pca_df_reset, x='PC1', y='PC2',
+    color='condition', symbol='condition', 
+    hover_name='sample',
+    title='Analyse en Composantes Principales',
+    labels={
+        'PC1': f'PC1 ({pca.explained_variance_ratio_[0]:.1%} variance)',
+        'PC2': f'PC2 ({pca.explained_variance_ratio_[1]:.1%} variance)',
+        'condition': 'Condition'
+    },
+    color_discrete_map={'Control': 'blue', 'Treatment': 'red'},
+    size_max=15
+)
+
+# Améliorer la mise en page
+fig_pca.update_layout(
+    legend_title_text='Condition',
+    height=600,
+    width=800
+)
+
+# Afficher le graphique PCA
+fig_pca.show()
+```
+
+```{python}
+#| cache: true
+
+# Installation de shiny pour Python si nécessaire
+try:
+    import shiny
+except ImportError:
+    import sys
+    !{sys.executable} -m pip install shiny
+    import shiny
+
+# Vérifier si on peut importer le module
+print("Shiny pour Python installé avec succès!")
+```
+
+```{python}
+#| context: setup
+
+# Code d'initialisation pour Shiny
+from shiny import App, render, ui, reactive
+import matplotlib.pyplot as plt
+import pandas as pd
+import seaborn as sns
+```
+
+```{python}
+#| component: shiny
+
+# Définir l'interface utilisateur
+def ui_components():
+    return ui.page_fluid(
+        ui.panel_title("Exploration Interactive des Données Pingouins"),
+        
+        ui.layout_sidebar(
+            ui.panel_sidebar(
+                ui.input_select(
+                    "x_var",
+                    "Variable X:",
+                    {"bill_length_mm": "Longueur du bec (mm)",
+                     "bill_depth_mm": "Profondeur du bec (mm)",
+                     "flipper_length_mm": "Longueur des ailerons (mm)",
+                     "body_mass_g": "Masse corporelle (g)"}
+                ),
+                ui.input_select(
+                    "y_var",
+                    "Variable Y:",
+                    {"bill_length_mm": "Longueur du bec (mm)",
+                     "bill_depth_mm": "Profondeur du bec (mm)",
+                     "flipper_length_mm": "Longueur des ailerons (mm)",
+                     "body_mass_g": "Masse corporelle (g)"},
+                    selected="bill_depth_mm"
+                ),
+                ui.input_checkbox_group(
+                    "species",
+                    "Espèces à afficher:",
+                    {"Adelie": "Adelie", "Gentoo": "Gentoo", "Chinstrap": "Chinstrap"},
+                    selected=["Adelie", "Gentoo", "Chinstrap"]
+                ),
+                ui.input_switch("add_regression", "Ajouter ligne de régression", value=False),
+                ui.hr(),
+                ui.h4("Statistiques"),
+                ui.output_text_verbatim("stats")
+            ),
+            ui.panel_main(
+                ui.output_plot("scatter_plot"),
+                ui.h4("Distribution par espèce"),
+                ui.output_plot("box_plot")
+            )
+        )
+    )
+
+# Définir le serveur
+def server_components(input, output, session):
+    
+    # Fonction pour charger et filtrer les données
+    @reactive.calc
+    def filtered_data():
+        # Utiliser le dataset penguins déjà disponible
+        from palmerpenguins import load_penguins
+        df = load_penguins()
+        
+        # Filtrer par espèce
+        df = df[df["species"].isin(input.species())]
+        
+        # Nettoyer les données
+        df = df.dropna(subset=[input.x_var(), input.y_var()])
+        
+        return df
+    
+    # Fonction pour générer le scatter plot
+    @output
+    @render.plot
+    def scatter_plot():
+        df = filtered_data()
+        
+        plt.figure(figsize=(10, 6))
+        scatter_plot = sns.scatterplot(
+            data=df,
+            x=input.x_var(),
+            y=input.y_var(),
+            hue="species",
+            style="sex",
+            s=100,
+            alpha=0.8
+        )
+        
+        # Ajouter une régression si demandé
+        if input.add_regression():
+            sns.regplot(
+                data=df,
+                x=input.x_var(),
+                y=input.y_var(),
+                scatter=False,
+                color="black",
+                line_kws={"linestyle": "--"}
+            )
+        
+        plt.title(f"Relation entre {input.x_var()} et {input.y_var()}")
+        plt.xlabel(dict(filtered_data().dtypes)[input.x_var()])
+        plt.ylabel(dict(filtered_data().dtypes)[input.y_var()])
+        
+        return plt
+    
+    # Fonction pour générer le box plot
+    @output
+    @render.plot
+    def box_plot():
+        df = filtered_data()
+        
+        plt.figure(figsize=(10, 6))
+        sns.boxplot(
+            data=df,
+            x="species",
+            y=input.y_var(),
+            palette="Set2"
+        )
+        plt.title(f"Distribution de {input.y_var()} par espèce")
+        
+        return plt
+    
+    # Fonction pour calculer et afficher les statistiques
+    @output
+    @render.text
+    def stats():
+        df = filtered_data()
+        
+        x_var = input.x_var()
+        y_var = input.y_var()
+        
+        stats_text = f"Nombre d'observations: {len(df)}\n\n"
+        
+        # Statistiques de la variable X
+        stats_text += f"Variable X ({x_var}):\n"
+        stats_text += f"  Min: {df[x_var].min():.2f}\n"
+        stats_text += f"  Max: {df[x_var].max():.2f}\n"
+        stats_text += f"  Moyenne: {df[x_var].mean():.2f}\n"
+        stats_text += f"  Écart-type: {df[x_var].std():.2f}\n\n"
+        
+        # Statistiques de la variable Y
+        stats_text += f"Variable Y ({y_var}):\n"
+        stats_text += f"  Min: {df[y_var].min():.2f}\n"
+        stats_text += f"  Max: {df[y_var].max():.2f}\n"
+        stats_text += f"  Moyenne: {df[y_var].mean():.2f}\n"
+        stats_text += f"  Écart-type: {df[y_var].std():.2f}\n\n"
+        
+        # Calculer la corrélation
+        corr = df[[x_var, y_var]].corr().iloc[0, 1]
+        stats_text += f"Corrélation: {corr:.4f}"
+        
+        return stats_text
+
+# Créer et retourner l'application
+app = App(ui_components, server_components)
+app
+```

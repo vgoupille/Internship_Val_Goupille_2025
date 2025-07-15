@@ -1,0 +1,2 @@
+Sample	Unique Reads	Duplicate Reads
+merged_trimmed-R1	12947419.0	1271528214.0

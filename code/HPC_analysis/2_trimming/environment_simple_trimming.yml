@@ -1,0 +1,23 @@
+name: fastp_env
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - fastp=0.24.1 # 0.24.1 is the last version 
+  - cutadapt=5.0
+  - trimmomatic=0.39
+  - yq
+  - yaml
+  - zlib
+  - libgcc
+  - libstdcxx-ng
+  - libgomp
+  - python>=3.6
+  - numpy
+  - pandas
+  - matplotlib
+  - seaborn 
+  - scipy
+ 
+  

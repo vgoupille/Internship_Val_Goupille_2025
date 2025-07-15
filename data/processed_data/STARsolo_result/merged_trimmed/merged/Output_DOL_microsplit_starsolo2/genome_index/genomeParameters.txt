@@ -1,0 +1,19 @@
+### STAR   --runMode genomeGenerate      --runThreadN 64   --genomeDir /projects/microsplit/data/processed_data/STARsolo_result/merged_trimmed/merged/Output_DOL_microsplit_starsolo2/genome_index   --genomeFastaFiles /projects/microsplit/data/processed_data/STARsolo_result/merged_trimmed/merged/raw_data/genome_ref/genome_ref_PsR401.fna      --genomeSAindexNbases 10   --sjdbGTFfile /projects/microsplit/data/processed_data/STARsolo_result/merged_trimmed/merged/raw_data/genome_annotation/genome_annotation_PsR401_fixed.gtf
+### GstrandBit 32
+versionGenome	2.7.4a
+genomeType	Full
+genomeFastaFiles	/projects/microsplit/data/processed_data/STARsolo_result/merged_trimmed/merged/raw_data/genome_ref/genome_ref_PsR401.fna 
+genomeSAindexNbases	10
+genomeChrBinNbits	18
+genomeSAsparseD	1
+genomeTransformType	None
+genomeTransformVCF	-
+sjdbOverhang	100
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	/projects/microsplit/data/processed_data/STARsolo_result/merged_trimmed/merged/raw_data/genome_annotation/genome_annotation_PsR401_fixed.gtf
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	exon
+sjdbGTFtagExonParentTranscript	transcript_id
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic
+genomeFileSizes	7602377 58749359

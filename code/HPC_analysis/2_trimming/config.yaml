@@ -1,0 +1,58 @@
+# SLURM configuration
+slurm:
+  memory: "8G"
+  cpus: 4
+  time: "02:00:00"
+
+# Trimming parameters
+trimming:
+  # TSO trimming
+  tso:
+    min_overlap: 6
+    max_errors: 0.2
+    sequences:
+      - "AAGCAGTGGTATCAACGCAGAGTGAATGGG"
+      - "CAGAGTGAATGGG"
+
+  # Fastp initial parameters
+  fastp_initial:
+    length_required: 91
+    poly_g_min_len: 10
+    poly_x_min_len: 12
+    adapters:
+      - "ATCTCGTATGCCGTCTTCTGCTTGA"
+      - "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
+
+  # PolyA trimming
+  polya:
+    min_overlap: 12
+    max_errors: 0.2
+    sequence: "A{12}"
+
+  # Specific adapter
+  specific_adapter:
+    min_overlap: 6
+    max_errors: 0.1
+    sequence: "CCACAGTCTCAAGCAC"
+
+  # Linker trimming
+  linker:
+    min_overlap: 6
+    max_errors: 0.2
+    sequences:
+      - "CCACAGTCTCAAGCACGTGGAT"
+      - "AGTCGTACGCCGATGCGAAACATCGGCCAC"
+      - "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA"
+
+  # Fastp final parameters
+  fastp_final:
+    trim_front1: 10
+    trim_front2: 0
+    trim_tail1: 16
+    trim_tail2: 0
+    length_required: 25
+
+# General settings
+general:
+  keep_intermediate_files: true
+  log_level: "INFO" 

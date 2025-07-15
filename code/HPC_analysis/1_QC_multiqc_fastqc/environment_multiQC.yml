@@ -1,0 +1,12 @@
+name: env_MultiQC
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - fastqc=0.12.1
+  - multiqc=1.28
+  - python=3.9
+  - tqdm 
+  - yaml
+  - yq

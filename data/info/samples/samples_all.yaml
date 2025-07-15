@@ -1,0 +1,68 @@
+# Sample information with paired-end reads
+# Format: sample_name: {R1: path_to_R1, R2: path_to_R2}
+ 
+samples:
+  BC_0076:
+    R1:
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0076_R1.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0076/BC_0076_R1_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0076_R1_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0076_R1_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0076/BC_0076_R1_trimmed.fastq.gz
+      test_cutadpat26_05_v3: /projects/microsplit/scripts/2_trimming/simple_trimming/cutadapt_trimming/results/BC_0076/BC_0076_R1_trimmed.fastq.gz
+      test_step1: scripts/2_trimming/simple_trimming/cutadapt_trimming/resultsfinal2/BC_0076_R1_fastp.fastq.gz
+      test_step2: scripts/2_trimming/simple_trimming/cutadapt_trimming/resultsfinal2/BC_0076_R1_trimmed.fastq.gz
+      test_step3: scripts/2_trimming/simple_trimming/cutadapt_trimming/resultsfinal2/BC_0076_R1_final_trimmed.fastq.gz
+      test_final: scripts/2_trimming/SPLiTrim/archive /results2/BC_0076/BC_0076_R1_final.fastq.gz
+    R2: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0076_R2.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0076/BC_0076_R2_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0076_R2_trimmed_complex.fastq.gz
+      test_final: scripts/2_trimming/SPLiTrim/archive /results2/BC_0076/BC_0076_R2_final.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0076_R2_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0076/BC_0076_R2_trimmed.fastq.gz
+      test_cutadpat26_05_v3: /projects/microsplit/scripts/2_trimming/simple_trimming/cutadapt_trimming/results/BC_0076/BC_0076_R2_trimmed.fastq.gz
+      test_step1: scripts/2_trimming/simple_trimming/cutadapt_trimming/resultsfinal2/BC_0076_R2_fastp.fastq.gz
+      test_step2: scripts/2_trimming/simple_trimming/cutadapt_trimming/resultsfinal2/BC_0076_R2_trimmed.fastq.gz
+      test_step3: scripts/2_trimming/simple_trimming/cutadapt_trimming/resultsfinal2/BC_0076_R2_final_trimmed.fastq.gz
+  BC_0077:
+    R1: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0077_R1.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0077/BC_0077_R1_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0077_R1_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0077_R1_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0077/BC_0077_R1_trimmed.fastq.gz
+    R2: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0077_R2.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0077/BC_0077_R2_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0077_R2_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0077_R2_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0077/BC_0077_R2_trimmed.fastq.gz
+  BC_0079:
+    R1: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0079_R1.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0079/BC_0079_R1_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0079_R1_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0079_R1_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0079/BC_0079_R1_trimmed.fastq.gz
+    R2: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0079_R2.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0079/BC_0079_R2_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0079_R2_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0079_R2_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0079/BC_0079_R2_trimmed.fastq.gz
+  BC_0080:
+    R1: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0080_R1.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0080/BC_0080_R1_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0080_R1_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0080_R1_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0080/BC_0080_R1_trimmed.fastq.gz
+      test_cutadpat26_05: scripts/2_trimming/simple_trimming/cutadapt_trimming/results/BC_0080/BC_0080_R1_trimmed.fastq.gz
+    R2: 
+      unzipped: data/raw_data/unzipped_data/fastq/BC_0080_R2.fastq.gz
+      trimmed_cutadapt_rmTSO_74nt: data/processed_data/trimmed_seq/trimmed_rmTSO_74nt/BC_0080/BC_0080_R2_trimmed.fastq.gz
+      trimmed_complex: data/raw_data/trimmed_data/fastq/BC_0080_R2_trimmed_complex.fastq.gz
+      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0080_R2_first1000000.fastq.gz
+      test100000_rmTSO_74nt: scripts/2_trimming/simple_trimming/results/test100000_rmTSO_74nt/BC_0080/BC_0080_R2_trimmed.fastq.gz
+      test_cutadpat26_05: scripts/2_trimming/simple_trimming/cutadapt_trimming/results/BC_0080/BC_0080_R2_trimmed.fastq.gz

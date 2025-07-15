@@ -1,0 +1,18 @@
+## Stage 2: Trim reads
+#trim away adapter (template switching oligo)
+trim_starting_sequence="${dropseq_root}/TrimStartingSequence OUTPUT_SUMMARY=${outdir}/adapter_trimming_report.txt \
+SEQUENCE=AAGCAGTGGTATCAACGCAGAGTGAATGGG MISMATCHES=0 NUM_BASES=5"
+
+
+
+https://github.com/RebekkaWegmann/splitseq_toolbox/blob/master/Split-seq_pipeline.sh
+
+
+https://github.com/rywet56/scRNA_seq_pipeline
+
+
+https://combine-lab.github.io/alevin-fry-tutorials/2022/split-seq/
+
+
+https://github.com/Alex-Rosenberg/split-seq-pipeline
+

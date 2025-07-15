@@ -1,0 +1,142 @@
+---
+title: "Plot UMI and Barcode Analysis"
+format:
+  pdf:
+    toc: true
+    number-sections: true
+    colorlinks: true
+editor: visual
+---
+
+# Analysis of UMI and Barcode Data
+
+## pipeline STARsolo
+
+![pipeline STARsolo](https://www.rna-seqblog.com/wp-content/uploads/2024/08/starsolo_pipeline-1024x143.png)
+
+https://github.com/alexdobin/STAR/issues/1158
+
+permet d'avoir un sortie graph comme cellranger pour 10X de façon simple
+
+OmicsBox : visualisation
+
+https://www.rna-seqblog.com/starsolo-single-cell-quantification-in-omicsbox-3-1/
+
+# Sinon pipeline Nextflow
+
+https://nf-co.re/scrnaseq/4.0.0/ qui permet de faire tourner STARsolo, cellranger, Salmon-Alevin, Kallisto etc. et avoir un sortie graphique comme cellranger, MultiQC, et les fichiers converti en format h5ad, rds.
+
+https://github.com/alexdobin/STAR/issues/660 ici on peut avoir des sortie graphique plus compliquées mais c'est avec le pipeline Nextflow
+
+![](https://user-images.githubusercontent.com/806256/59448934-ed872000-8dba-11e9-80c4-cd6ea27f5825.png) rapport MultiQC https://github.com/MultiQC/MultiQC/issues/1613
+
+the Solo.out/Gene/Summary.csv file is similar to CellRanger's summary statistics. To get the "number of UMIs vs cells" plot:
+
+With standard STARsolo parameters it will generate Solo.out/Gene/Summary.csv which contains information very similar to CellRanger summary report, and Solo.out/Gene/UMIperCellSorted.txt which contains the number of UMIs per cell, sorted in descendent order, for the UMI vs cell plot.
+
+![cell_ranger_plot](https://user-images.githubusercontent.com/806256/59449245-8fa70800-8dbb-11e9-93d0-a7a071902e2d.png)
+
+Merci pour l’image ! Voici l’interprétation des différents plots :
+
+⸻
+
+1️⃣ Knee Plot - Détermination de la Whitelist des Barcodes (Haut gauche)
+
+📌 But : Déterminer un seuil de sélection des barcodes correspondant aux cellules réelles. 🔍 Interprétation : • L’axe X représente le rang des barcodes triés par fréquence. • L’axe Y représente la fréquence des barcodes. • La courbe en rouge montre les barcodes considérés comme valides (cellules réelles). • La courbe en noir correspond aux barcodes considérés comme du bruit (artefacts ou cellules mortes). • Le point d’inflexion indique le seuil optimal entre les cellules réelles et le bruit.
+
+⸻
+
+2️⃣ Barcode Collapsing (Haut milieu)
+
+📌 But : Évaluer l’impact du regroupement des barcodes similaires. 🔍 Interprétation : • L’axe X représente la fréquence des barcodes avant regroupement. • L’axe Y représente la fréquence après regroupement. • La diagonale parfaite signifie qu’il y a peu de changement. • La mention Mean read gain per CB: 2.978% indique une augmentation moyenne des lectures après regroupement, ce qui est un bon indicateur de correction d’erreurs.
+
+⸻
+
+3️⃣ Knee Plot - Nombre de Gènes par Cellule (Haut droite)
+
+📌 But : Montrer la distribution du nombre de gènes détectés par cellule. 🔍 Interprétation : • L’axe X représente le rang des barcodes. • L’axe Y représente le nombre de gènes détectés. • Une chute brutale indique la transition entre les cellules viables et le bruit. • Une courbe étendue (sans chute brutale) peut indiquer une faible qualité des cellules ou du séquençage.
+
+⸻
+
+4️⃣ Résumé de la Quantification (Bottom row, 3 graphiques)
+
+📌 But : Visualiser la relation entre la fréquence des barcodes et différents paramètres biologiques. 🔍 Interprétation : • Premier plot (UMI count vs Barcode Frequency) • L’axe X représente la fréquence des barcodes. • L’axe Y représente le nombre total d’UMIs. • Les points rouges sont les barcodes retenus, les verts sont écartés. • Une bonne corrélation entre les deux valeurs est attendue. • Deuxième plot (Nombre de gènes détectés vs Barcode Frequency) • Montre combien de gènes sont associés à chaque barcode. • Un bon échantillon montre une augmentation progressive des gènes détectés avec la fréquence des barcodes. • Troisième plot (Nombre de gènes vs UMI count) • Relation entre le nombre d’UMIs et le nombre de gènes détectés. • Les points rouges sont ceux inclus dans la whitelist (cellules valides). • Une forte corrélation indique un bon séquençage et peu de bruit technique.
+
+⸻
+
+🧐 Conclusion
+
+L’ensemble de ces graphiques permet de : ✔ Sélectionner les barcodes correspondant aux cellules réelles. ✔ Vérifier que les regroupements de barcodes améliorent la qualité des données. ✔ Identifier le seuil optimal pour filtrer les cellules viables et éliminer le bruit.
+
+```         
+1.  Knee plot - Détermination de la Whitelist des Barcodes (Haut gauche)
+2.  Barcode collapsing (Haut milieu)
+3.  Knee plot - Nombre de gènes par cellule (Haut droite)
+4.  Quantification summary - Barcode frequency vs UMI count (Bas gauche)
+5.  Quantification summary - Barcode frequency vs Nombre de gènes (Bas milieu)
+6.  Quantification summary - Total UMI count vs Nombre de gènes (Bas droite)
+```
+
+# starsolo info
+
+https://github.com/alexdobin/STAR/blob/master/docs/STARsolo.md peut mettre des filtres
+
+Cell filtering (calling)
+
+In addition to raw, unfiltered output of gene/cell counts, STARsolo performs cell filtering (a.k.a. cell calling), which aims to select a subset of cells that are likely to be "real" cells as opposed to empty droplets (containing ambient RNA). Two types of filtering are presently implemented: simple (knee-like) and advanced EmptyDrop-like. The selected filtering is also used to produce summary statistics for filtered cells in the Summary.csv file, which is similar to CellRanger's summary and is useful for Quality Control.
+
+Knee filtering
+
+Knee filtering is similar to the method used by CellRanger 2.2.x. This is turned on by default and is controlled by:
+
+--soloCellFilter CellRanger2.2 You can also add three numbers for this option (default values are given in parenthesis): the number of expected cells (3000), robust maximum percentile for UMI count (0.99), maximum to minimum ratio for UMI count (10).
+
+EmptyDrop-like filtering
+
+CellRanger 3.0.0 use advanced filtering based on the EmptyDrop algorithm developed by Lun et al. This algorithm calls extra cells compared to the knee filtering, allowing for cells that have relatively fewer UMIs but are transcriptionally different from the ambient RNA. In STARsolo, this filtering can be activated by:
+
+--soloCellFilter EmptyDrops_CR It can be followed by 10 numeric parameters: nExpectedCells (3000), maxPercentile (0.99), maxMinRatio (10), indMin (45000), indMax (90000), umiMin (500), umiMinFracMedian (0.01), candMaxN (20000), FDR (0.01), simN (10000).
+
+Cell filtering of previously generated raw matrix
+
+It is possible to run only the filtering algorithm (without the need to re-map) inputting the previously generated raw matrix:
+
+STAR --runMode soloCellFiltering /path/to/count/dir/raw/ /path/to/output/prefix --soloCellFilter EmptyDrops_CR The /path/to/count/dir/raw/ directory should contain the "raw" barcodes.tsv, features.tsv, and matrix.mtx files generated in a previos STARsolo run. The output will contain the filtered files.
+
+Le filtrage par défaut de STARsolo dépend de la version de CellRanger que tu veux émuler.
+
+🔹 Filtrage par défaut de STARsolo
+
+Si aucune option --soloCellFilter n’est spécifiée, STARsolo applique : • Le filtrage “Knee” (CellRanger2.2), similaire à CellRanger 2.2.x • Ce filtrage sélectionne un nombre attendu de cellules (par défaut 3000), basé sur la distribution du nombre d’UMIs par cellule. • Il est basé sur le point d’inflexion (“knee”) dans la distribution des UMIs.
+
+Equivalent explicite :
+
+--soloCellFilter CellRanger2.2
+
+⸻
+
+🔹 Autres options disponibles
+
+1️⃣ Filtrage avancé EmptyDrops (CellRanger 3.0.0)
+
+--soloCellFilter EmptyDrops_CR
+
+✅ Utilise un modèle statistique pour distinguer les cellules des “empty droplets” ✅ Identifie des cellules ayant un faible nombre d’UMIs mais qui sont transcriptionnellement distinctes de l’ARN ambiant ✅ Meilleur pour les cellules rares ou hétérogènes
+
+2️⃣ Pas de filtrage (brut)
+
+--soloCellFilter None
+
+✅ Garde toutes les cellules détectées (y compris les empty droplets) ✅ Utile si tu veux filtrer plus tard avec Seurat/Scanpy
+
+⸻
+
+🔹 Résumé
+
+Option Filtrage appliqué Avantages Par défaut (CellRanger2.2) Méthode Knee (3000 cellules) Simple, rapide, adapté aux gros datasets EmptyDrops_CR Algorithme EmptyDrops Meilleur pour les cellules rares, évite d’exclure des vrais cellules None Aucune cellule exclue Permet de filtrer plus finement après coup (ex. Seurat, Scanpy)
+
+Tu veux savoir quel filtrage est appliqué dans ton run ? Regarde dans :
+
+\$OUTPUT_DIR/Solo.out/Gene/Summary.csv
+
+<https://combine-lab.github.io/alevin-fry-tutorials/2022/split-seq/>

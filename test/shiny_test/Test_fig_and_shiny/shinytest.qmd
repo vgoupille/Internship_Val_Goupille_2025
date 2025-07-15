@@ -1,0 +1,248 @@
+---
+title: "Test d'application Shiny dans Quarto"
+author: "Valentin Goupille"
+format: html
+server: shiny
+---
+
+```{=html}
+<style>
+.banner {
+  background-color: #f8f9fa;
+  padding: 20px;
+  text-align: center;
+  margin-bottom: 20px;
+  border-radius: 5px;
+}
+
+.textbox {
+  background-color: #e9ecef;
+  padding: 15px;
+  border-left: 4px solid #6c757d;
+  margin-bottom: 20px;
+  border-radius: 0 5px 5px 0;
+}
+</style>
+```
+
+::: banner
+Créé avec ❤️ en utilisant Quarto & Shiny
+:::
+
+::: textbox
+Cette démonstration montre comment combiner Quarto et Shiny pour créer des documents texte interactifs.
+Idéal pour les cas où vous avez besoin d'éléments interactifs tout en gardant une interface principalement textuelle.
+:::
+
+Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque venenatis lectus vel tincidunt sagittis.
+Phasellus vulputate libero vitae bibendum tincidunt.
+Curabitur pharetra, tortor quis bibendum facilisis, arcu metus consequat nisi, et ultrices risus nibh at ligula.
+Nulla tempor, justo sit amet sollicitudin sodales, est arcu dapibus nulla, eu suscipit augue mi finibus nibh.
+Quisque eget imperdiet neque. 
+Curabitur justo mauris, elementum et tortor vitae, sollicitudin condimentum nisl. 
+Vestibulum volutpat sapien ultricies ante rutrum, id tincidunt mi viverra. 
+Quisque sodales ullamcorper quam.
+
+---
+
+### Informations supplémentaires {style="margin-bottom: 30px;"}
+
+::: column-page
+```{r}
+#| message: false
+#| warning: false
+
+tib_tags <- tibble::tibble(
+  headings = c(
+    'Analyses génomiques 🧬',
+    'Phylogénie moléculaire 🌲',
+    'Analyse transcriptomique 📊',
+    'Visualisation de données 📈',
+    'Bioinformatique structurale 🔍'
+  ),
+  text = 'Duis imperdiet, est vitae mollis porttitor, neque metus ornare urna, a ullamcorper dolor sem at tellus.' 
+) |> 
+  dplyr::mutate(
+    headings = purrr::map(
+      headings, 
+      \(x) htmltools::div(htmltools::strong(x))
+    ),
+    text = purrr::map(
+      text, 
+      htmltools::div
+    ),
+    combined = purrr::map2(
+      headings,
+      text,
+      \(x, y) htmltools::div(
+        style = htmltools::css(
+          width = '300px',
+          margin_right = '20px',
+          margin_bottom = '20px'
+        ),
+        x, 
+        y
+      )
+    )
+  )
+htmltools::div(
+  style = htmltools::css(
+    display = 'flex',
+    flex_wrap = 'wrap'
+  ),
+  tib_tags$combined
+)
+```
+:::
+
+---
+
+### Partie interactive
+
+```{r}
+#| context: setup
+#| message: false
+#| warning: false
+library(bslib)
+library(ggplot2)
+```
+
+
+```{r}
+#| column: page
+layout_sidebar(
+  height = 600,
+  sidebar = sidebar(
+    shiny::selectizeInput(
+      'select_species', 
+      'Espèces à mettre en évidence', 
+      choices = c('Adelie', 'Chinstrap', 'Gentoo'),
+      selected = c('Adelie', 'Chinstrap', 'Gentoo'),
+      multiple = TRUE
+    ),
+    shiny::sliderInput(
+      'slider_weight',
+      'Poids minimum (g)',
+      min = 1000,
+      max = 5000,
+      value = 3000
+    ),
+    shiny::selectInput(
+      'plot_type',
+      'Type de graphique pour la partie inférieure',
+      choices = c('Boxplot', 'Histogramme', 'Densité'),
+      selected = 'Boxplot'
+    )
+  ),
+  shiny::plotOutput('output_plot'),
+  htmltools::br(),
+  htmltools::h4("Analyse supplémentaire"),
+  shiny::plotOutput('second_plot')
+)
+```
+
+```{r}
+#| context: server
+# Render the plot based on user inputs
+output$output_plot <- shiny::renderPlot({
+  palmerpenguins::penguins |> 
+    dplyr::filter(
+      species %in% input$select_species,
+      body_mass_g >= input$slider_weight
+    ) |> 
+    ggplot(
+      aes(
+        x = bill_length_mm, 
+        y = flipper_length_mm, 
+        fill = species
+      )
+    ) +
+    geom_point(
+      shape = 21, 
+      size = 6, 
+      col = 'black'
+    ) +
+    labs(
+      x = 'Longueur du bec (mm)',
+      y = 'Longueur des nageoires (mm)',
+      fill = 'Espèce',
+      title = 'Manchots de l\'archipel Palmer'
+    ) +
+    theme_minimal(
+      base_size = 20, 
+      base_family = 'Source Sans Pro'
+    ) +
+    scale_fill_manual(
+      values = c(
+        Adelie = '#0072B2', 
+        Gentoo = '#009E73',
+        Chinstrap = '#CC79A7'
+      ),
+    ) +
+    coord_cartesian(
+      xlim = c(30, 60), 
+      ylim = c(170, 240)
+    )
+})
+
+# Second plot - dynamic based on user selection
+output$second_plot <- shiny::renderPlot({
+  # Filter data based on user inputs
+  filtered_data <- palmerpenguins::penguins |> 
+    dplyr::filter(
+      species %in% input$select_species,
+      body_mass_g >= input$slider_weight
+    )
+  
+  # Create different plot types based on selection
+  if(input$plot_type == "Boxplot") {
+    p <- filtered_data |> 
+      ggplot(aes(x = species, y = bill_depth_mm, fill = species)) +
+      geom_boxplot() +
+      labs(
+        x = "Espèce",
+        y = "Profondeur du bec (mm)",
+        title = "Distribution de la profondeur du bec par espèce"
+      )
+  } else if(input$plot_type == "Histogramme") {
+    p <- filtered_data |> 
+      ggplot(aes(x = body_mass_g, fill = species)) +
+      geom_histogram(binwidth = 200, alpha = 0.7, position = "identity") +
+      labs(
+        x = "Poids corporel (g)",
+        y = "Nombre",
+        title = "Distribution du poids corporel"
+      )
+  } else {
+    p <- filtered_data |> 
+      ggplot(aes(x = bill_length_mm, fill = species)) +
+      geom_density(alpha = 0.7) +
+      labs(
+        x = "Longueur du bec (mm)",
+        y = "Densité",
+        title = "Distribution de la longueur du bec"
+      )
+  }
+  
+  # Apply common theme and color palette
+  p + theme_minimal(
+    base_size = 18, 
+    base_family = 'Source Sans Pro'
+  ) +
+  scale_fill_manual(
+    values = c(
+      Adelie = '#0072B2', 
+      Gentoo = '#009E73',
+      Chinstrap = '#CC79A7'
+    )
+  )
+})
+```
+
+---
+
+### Informations de contact
+
+Vous pouvez me contacter par email : [valentin.goupille@example.com](mailto:valentin.goupille@example.com)
+
+```

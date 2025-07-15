@@ -1,0 +1,13 @@
+name: STARsolo_microSPLIT_DOL
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - star=2.7.9
+  - cufflinks=2.2.1
+  - gffread=0.12.1
+  - python=3.6
+  - yq
+  - tqdm
+  - yaml 

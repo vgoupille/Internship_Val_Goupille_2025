@@ -1,0 +1,120 @@
+---
+title: "Analyse of the cells"
+author: "Valentin Goupille"
+date: "2025-05-30"
+format:
+  pdf:
+    #toc: true
+    number-sections: true
+    colorlinks: true
+    include-in-header: 
+      text: |
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{
+          commandchars=\\\{\},
+          breaklines, breaknonspaceingroup, breakanywhere
+        }
+  html:
+    toc: true
+    number-sections: true
+    code-fold: true
+---
+
+# Filter and analyse
+
+#Import the rds file
+
+```{r}
+#Import the libraries
+library(Seurat)
+library(ggplot2)
+library(patchwork)
+```
+
+```{r}
+# Import the rds file
+#seurat_object <- readRDS("data/big_data/RDS_files/SeuratObject_All_Metadata.rds")
+seurat_object <- readRDS("data/big_data/RDS_files/Seurat_Object_filtered-CDS_Metadata.rds")
+# Show the first 6 rows of the object
+head(seurat_object)
+#show the number of cells
+ncol(seurat_object)
+#show the number of genes
+nrow(seurat_object)
+
+```
+
+#Filter the cells
+
+```{r}
+#Filter the cells with less than 200 counts
+seurat_object_filtered <- subset(seurat_object, subset = nCount_RNA > 0)
+#Show the number of cells after filtering
+ncol(seurat_object_filtered)
+
+#show the max and min of the counts
+max(seurat_object_filtered$nCount_RNA)
+min(seurat_object_filtered$nCount_RNA)
+mean(seurat_object_filtered$nCount_RNA)
+median(seurat_object_filtered$nCount_RNA)
+
+#show the max and min of the genes
+max(seurat_object_filtered$nFeature_RNA)
+min(seurat_object_filtered$nFeature_RNA)
+
+```
+
+```{r}
+seurat_object_filtered
+str(seurat_object_filtered)
+head(seurat_object_filtered)
+
+```
+
+```{r}
+VlnPlot(seurat_object_filtered, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2, pt.size = 0.1, group.by = "Condition") #group by the Condition
+
+# group by condition and OD_timepoint
+VlnPlot(seurat_object_filtered, features = c("nFeature_RNA", "nCount_RNA"), ncol = 2, pt.size = 0.1, group.by = c("Condition"), split.by = "OD_timepoint") #split by the OD_timepoint and group by the Condition , add legend
+
+```
+
+```{r}
+
+VlnPlot(object = seurat_object, 
+  features = c("nCount_RNA", "nFeature_RNA"),
+        group.by = "Condition", 
+        split.by = "OD_timepoint", 
+        pt.size = 0.5, 
+        combine = FALSE ,
+        fill.by = "Condition")
+
+```
+
+```{r}
+VlnPlot(object = seurat_object_filtered, 
+  features = c("nCount_RNA", "nFeature_RNA"),
+        group.by = "Condition", 
+        split.by = "OD_timepoint", 
+        pt.size = 0.5, 
+        combine = FALSE ,
+        fill.by = "Condition")
+```
+
+```{r}
+
+plot_feature_scatter <- FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA",  group.by = "Condition")
+plot_feature_scatter
+
+```
+
+```{r}
+
+VlnPlot(object = seurat_object, 
+  features = c("nCount_RNA", "nFeature_RNA"),
+        group.by = "Condition", 
+        split.by = "OD_timepoint", 
+        pt.size = 0.5, 
+        combine = FALSE ,
+        fill.by = "Condition")
+```

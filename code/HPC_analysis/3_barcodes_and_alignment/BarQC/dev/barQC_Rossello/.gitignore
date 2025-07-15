@@ -1,0 +1,23 @@
+# Ignore test data
+test_data/
+
+# Ignore any temporary files
+*.tmp
+*.temp
+*.log
+
+# Ignore any cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignore any virtual environment
+.env/
+venv/
+ENV/
+
+# Ignore any IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo 

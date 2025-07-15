@@ -1,0 +1,237 @@
+experiment_name: "microsplit_single_cell_split_pool_barcoding"
+sequencing_platform: "Novaseq"
+read_type: "Paired-end"
+
+# Description of the library structure on the forward strand (5' -> 3')
+library_structure_forward_strand:
+  - name: "Illumina_P5"
+    sequence: "AATGATACGGCGACCACCGAGATCTACAC"
+    length: 29
+    description: "Illumina P5 adapter sequence"
+  - name: "spacer_after_P5"
+    sequence: "TAGATCGC"
+    length: 8
+    description: "Short sequence following P5"
+  - name: "s5"
+    sequence: "TCGTCGGCAGCGTC"
+    length: 14
+    description: "s5 sequence"
+  - name: "ME"
+    sequence: "AGATGTGTATAAGAGACAG"
+    length: 19
+    description: "Mosaic End sequence"
+  - name: "cDNA"
+    sequence_type: "variable"
+    description: "Complementary DNA, target sequence of interest"
+  - name: "polyA_or_random_hexamer"
+    description: "PolyA tail or random hexamer following cDNA"
+    options:
+      - type: "polyA"
+        sequence_pattern: "A{15}" # Nominal length
+        length: 15
+        description: "Typically 15bp polyA tail"
+      - type: "random_hexamer"
+        sequence_pattern: "N{6}"
+        length: 6
+        description: "6bp random hexamer"
+  - name: "barcode_R1"
+    sequence_pattern: "N{8}"
+    length: 8
+    description: "Round 1 Barcode (8bp)"
+  - name: "linker_R2" # Round 2 Linker
+    sequence: "CCACAGTCTCAAGCACGTGGAT"
+    length: 22
+    description: "Round 2 Linker sequence"
+  - name: "barcode_R2"
+    sequence_pattern: "N{8}"
+    length: 8
+    description: "Round 2 Barcode (8bp)"
+  - name: "linker_R3" # Round 3 Linker
+    sequence: "AGTCGTACGCCGATGCGAAACATCGGCCAC"
+    length: 30
+    description: "Round 3 Linker sequence"
+  - name: "barcode_R3"
+    sequence_pattern: "N{8}"
+    length: 8
+    description: "Round 3 Barcode (8bp)"
+  - name: "UMI"
+    sequence_pattern: "N{10}"
+    length: 10
+    description: "Unique Molecular Identifier (10bp)"
+  - name: "TruSeq_Read_2_adapter"
+    sequence: "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
+    length: 34
+    description: "TruSeq Read 2 adapter sequence"
+  - name: "index_i7"
+    sequence_pattern: "N{6}"
+    length: 6
+    description: "i7 library index (6bp)"
+  - name: "Illumina_P7"
+    sequence: "ATCTCGTATGCCGTCTTCTGCTTG"
+    length: 24
+    description: "Illumina P7 adapter sequence"
+
+read1_info:
+  length_cycles: 241
+  description: "Read 1 sequences the cDNA region."
+  sequencing_start_after: # R1 starts after s5 and ME
+    - "s5"
+    - "ME"
+  expected_primary_content: "cDNA"
+  potential_trailing_sequences: # If cDNA is short, R1 can read into these elements
+    - "polyA_or_random_hexamer"
+    - "barcode_R1"
+    - "linker_R2"
+    - "barcode_R2"
+    - "linker_R3"
+    - "barcode_R3"
+    - "UMI"
+    - "TruSeq_Read_2_adapter"
+  potential_artifacts:
+    - name: "TSO_R1_artifact"
+      sequence: "AAGCAGTGGTATCAACGCAGAGTGAATGGG"
+      max_length: 31
+      description: "Full or partial Template Switching Oligo (TSO) sequence potentially found at the 5' end of R1 (approx. 5% of reads)."
+
+read2_info:
+  length_cycles: 91
+  description: "Read 2 sequences barcodes and UMI from the 3' end of the library construct (5'->3' on the second strand)."
+  # Sequenced 5' -> 3' on the second strand, starting after the reverse complement of TruSeq_Read_2_adapter.
+  # The sequences listed here are as they appear in Read 2.
+  expected_content_ordered: # From base 1 of Read 2
+    - name: "UMI" # Bases 1-10
+      length: 10
+      sequence_pattern: "N{10}"
+      notes: "This is the UMI sequence (reverse complement of the one on fwd strand definition if bases were specified)."
+    - name: "barcode_R3" # Bases 11-18
+      length: 8
+      sequence_pattern: "N{8}"
+      notes: "This is Barcode R3 (reverse complement)."
+    - name: "linker_R3_rc" # Bases 19-48
+      sequence: "GTGGCCGATGTTTCGCATCGGCGTACGACT" # Reverse complement of linker_R3
+      length: 30
+      description: "Round 3 Linker (reverse complement)"
+    - name: "barcode_R2" # Bases 49-56
+      length: 8
+      sequence_pattern: "N{8}"
+      notes: "This is Barcode R2 (reverse complement)."
+    - name: "linker_R2_rc" # Bases 57-78
+      sequence: "ATCCACGTGCTTGAGACTGTGG" # Reverse complement of linker_R2
+      length: 22
+      description: "Round 2 Linker (reverse complement)"
+    - name: "barcode_R1" # Bases 79-86
+      length: 8
+      sequence_pattern: "N{8}"
+      notes: "This is Barcode R1 (reverse complement)."
+    - name: "supplemental_bases_R2_end" # Bases 87-91
+      length: 5
+      sequence_pattern: "N{5}"
+      description: "Additional 5 bases sequenced, potentially part of polyT (rc of polyA) or rc of random hexamer."
+
+
+# Motifs on the forward strand, relevant for R1 trimming if cDNA is short.
+# Offsets are from the end of the cDNA.
+motifs_for_R1_trimming:
+  - name: "Round2_linker"
+    sequence: "CCACAGTCTCAAGCACGTGGAT" # Forward strand sequence
+    length: 22
+    offset_from_cDNA_end:
+      description: "Distance from cDNA 3'-end to start of this linker."
+      value_with_15bp_polyA: 23 # 15 (polyA) + 8 (barcode_R1)
+      value_with_6bp_hexamer: 14  # 6 (hexamer) + 8 (barcode_R1)
+      components_in_between: ["polyA_or_random_hexamer", "barcode_R1"]
+  - name: "Round3_linker"
+    sequence: "AGTCGTACGCCGATGCGAAACATCGGCCAC" # Forward strand sequence
+    length: 30
+    offset_from_cDNA_end:
+      description: "Distance from cDNA 3'-end to start of this linker."
+      value_with_15bp_polyA: 53 # 15 (polyA) + 8 (bcR1) + 22 (linkerR2) + 8 (bcR2)
+      value_with_6bp_hexamer: 44  # 6 (hex) + 8 (bcR1) + 22 (linkerR2) + 8 (bcR2)
+      components_in_between: ["polyA_or_random_hexamer", "barcode_R1", "linker_R2", "barcode_R2"]
+  - name: "TruSeq_Read_2_adapter_start_in_R1" # The start of the TruSeq Read 2 adapter itself
+    sequence: "AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC" # Forward strand sequence
+    length: 34
+    offset_from_cDNA_end:
+      description: "Distance from cDNA 3'-end to start of this adapter."
+      value_with_15bp_polyA: 101 # 15 (polyA) + 8 (bcR1) + 22 (linkR2) + 8 (bcR2) + 30 (linkR3) + 8 (bcR3) + 10 (UMI)
+      value_with_6bp_hexamer: 92   # 6 (hex) + 8 (bcR1) + 22 (linkR2) + 8 (bcR2) + 30 (linkR3) + 8 (bcR3) + 10 (UMI)
+      components_in_between: ["polyA_or_random_hexamer", "barcode_R1", "linker_R2", "barcode_R2", "linker_R3", "barcode_R3", "UMI"]
+
+other_key_sequences:
+  - name: "TSO_Complete" # Template Switching Oligo
+    sequence: "AAGCAGTGGTATCAACGCAGAGTGAATGGG"
+    length: 31
+    description: "Full TSO sequence."
+  - name: "polyA_nominal_tail"
+    sequence_pattern: "A{15}"
+    description: "Nominal 15bp polyA tail."
+  - name: "polyA_detection_pattern_aggressive"
+    sequence_pattern: "A{10,}" # Suggested for more aggressive polyA filtering
+    description: "Pattern to detect polyA sequences of at least 10 A's."
+  # - name: "s5_plus_ME"
+  #   sequence: "TCGTCGGCAGCGTCAGATGTGTATAAGAGACAG" # s5 + ME
+  #   length: 33
+  #   description: "Combined s5 and ME sequence, precedes cDNA in R1."
+
+# Reverse complement sequences for reference (some already used in Read2 section)
+reverse_complement_sequences_reference:
+    Illumina_P5_rc: "GTGTAGATCTCGGTGGTCGCCGTATCATT"
+    spacer_after_P5_rc: "GCGATCTA"
+    s5_rc: "GACGCTGCCGACGA"
+    ME_rc: "CTGTCTCTTATACACATCT"
+    linker_R2_rc: "ATCCACGTGCTTGAGACTGTGG" # Also in read2_info
+    linker_R3_rc: "GTGGCCGATGTTTCGCATCGGCGTACGACT" # Also in read2_info
+    TruSeq_Read_2_adapter_rc: "GTGACTGGAGTTCAGACGTGTGCTCTTCCGATCT"
+    Illumina_P7_rc: "CAAGCAGAAGACGGCATACGAGAT"
+
+
+
+
+  
+general_artifacts:
+  - name: "PolyG_run"
+    sequence_pattern: "G{min_len,}" # e.g. G{10,}
+    location_info: "Anywhere, potential Novaseq artifact."
+    action: "Identify, potentially trim or filter read."
+
+# MicroSPLiT Trimming Pipeline Configuration
+
+# Input and output directories
+input_dir: "raw_data"
+output_dir: "trimmed_data"
+
+# Tool selection and configuration
+tools:
+  # Cutadapt configuration
+  cutadapt:
+    enabled: true
+    adapter_sequence: "AGATCGGAAGAGC"  # Illumina universal adapter
+    quality_cutoff: 20
+    min_length: 36
+    threads: 4
+
+  # Trimmomatic configuration
+  trimmomatic:
+    enabled: false
+    adapters_file: "/path/to/adapters.fa"  # Update this path
+    min_length: 36
+    quality_threshold: 20
+    sliding_window: "4:20"
+    threads: 4
+
+# Quality control settings
+quality_control:
+  fastqc:
+    enabled: true
+    threads: 4
+    output_dir: "qc_reports"
+
+# Logging configuration
+logging:
+  level: "INFO"
+  file: "trimming_pipeline.log"
+
+# Resource limits
+resources:
+  max_memory: "8G"
+  max_threads: 8

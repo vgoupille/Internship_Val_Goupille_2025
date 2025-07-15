@@ -1,0 +1,12 @@
+name: env_Subsampling
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - seqtk
+  - yq
+  - python=3.12
+  - biopython=1.78
+  - regex
+

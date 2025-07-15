@@ -1,0 +1,4 @@
+- [ ] script filter
+- [ ] script Anndata ou Seurat
+- [ ] ajouter les trimmming fichiers dans le  folder
+- [ ] revoir script data_growth 
