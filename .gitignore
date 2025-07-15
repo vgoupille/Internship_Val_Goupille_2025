@@ -2,7 +2,7 @@ big_data/
 *.out
 *.err
 
-*.json
+
 *.rds
 *.fastq
 *.fastq.gz
