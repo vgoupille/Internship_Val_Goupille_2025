@@ -306,13 +306,15 @@ def process_anndata_objects(
             print("\n2. Adding gene metadata...")
             adata = add_gene_metadata_to_anndata(adata, ncbi_df)
 
-            # Save completely enriched object
-            output_file = Path(output_dir) / Path(file_path).name
+            # Save completely enriched object with metadata suffix
+            input_filename = Path(file_path).stem  # Get filename without extension
+            output_filename = f"{input_filename}_with_metadata.h5ad"
+            output_file = Path(output_dir) / output_filename
             adata.write_h5ad(output_file)
             print(f"\n✓ Completely enriched object saved: {output_file}")
 
             # Display summary
-            print(f"\nSummary for {Path(file_path).name}:")
+            print(f"\nSummary for {output_filename}:")
             print(
                 f"  - Cells with metadata: {sum(~adata.obs['Well_loc_rd1'].isna())}/{len(adata)}"
             )

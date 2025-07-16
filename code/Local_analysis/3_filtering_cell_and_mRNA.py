@@ -3,13 +3,6 @@ import sys
 import os
 import pprint as pp
 import numpy as np
-
-os.chdir("/Users/valentingoupille/Documents/Rapport_stage/")
-# %%
-
-
-# %%
-
 import anndata as ad
 import pandas as pd
 import scanpy as sc
@@ -18,8 +11,13 @@ import seaborn as sns
 from anndata import AnnData
 
 
-# %% mettre le chemin dans une variable
-path_to_anndata = "data/anndata_objects_with_gene_metadata/"
+# %%
+# Set the working directory to the project root
+os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+
+# %% Set path to anndata objects
+path_to_anndata = "data/anndata_objects_with_complete_metadata/"
 # %% see the dir with the anndata objects
 os.listdir(path_to_anndata)
 # %%
@@ -161,9 +159,9 @@ for group, count in group_counts.items():
 
 
 # %%
-# Calcul de statistiques simples
+# Calculate simple statistics
 adata.obs["n_counts"] = adata.X.sum(axis=1).A1  # total counts
-adata.obs["n_genes"] = (adata.X > 0).sum(axis=1).A1  # nombre de gènes détectés
+adata.obs["n_genes"] = (adata.X > 0).sum(axis=1).A1  # number of genes detected
 
 
 # %%
@@ -183,7 +181,7 @@ adata.obs.groupby("RepTech")["n_counts"].count()
 
 # %%
 
-# %% create a new variable Reptechg qui est le suffixe de RepTech ..._1
+# %% create a new variable RepTech_suffix which is the suffix of RepTech ..._1
 adata.obs["RepTech_suffix"] = adata.obs["RepTech"].str.split("_").str[-1]
 
 
@@ -3974,7 +3972,7 @@ adata_inter = mark_and_filter_genes_by_group_annotated(
 )
 
 # %%
-# Voir les colonnes ajoutées
+# View the added columns
 final_adata.var[
     [
         "gene_pass_union_OD_5pct",
@@ -4010,14 +4008,16 @@ final_adata.n_vars
 # %%
 final_adata.var
 
-# %% save final_adata
+# %% Save final filtered anndata object
 final_adata.write_h5ad(
     "data/anndata_objects_with_gene_metadata/final_adata_filtered.h5ad"
 )
 # %%
+# Plot violin plots showing distribution of total counts and number of genes per group
 sc.pl.violin(final_adata, ["total_counts"], groupby="Group")
 sc.pl.violin(final_adata, ["n_genes_by_counts"], groupby="Group")
 # %%
+# Scatter plot of total counts vs number of genes, colored by group
 sc.pl.scatter(final_adata, "total_counts", "n_genes_by_counts", color="Group")
 
 
@@ -4028,26 +4028,26 @@ from matplotlib.colors import to_rgba
 import numpy as np
 
 
-# Fonction pour éclaircir une couleur
+# Function to lighten a color
 def lighten_color(color, amount=0.5):
     rgba = np.array(to_rgba(color))
     white = np.array([1, 1, 1, 1])
     return tuple(rgba + (white - rgba) * amount)
 
 
-# Obtenir la palette tab20
+# Get tab20 color palette
 tab20_colors = plt.get_cmap("tab20").colors
-# Éclaircir la palette pour M9
+# Create lightened version for M9
 tab20_light = [lighten_color(c, amount=0.5) for c in tab20_colors]
 
-# Créer les figures
+# Create figure with two subplots
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
 
-# Valeurs min/max globales
+# Get global min/max values
 total_counts_max = adata1_genes_filtered.obs["total_counts"].max()
 n_genes_max = adata1_genes_filtered.obs["n_genes_by_counts"].max()
 
-# Données M9F
+# Plot M9F data
 m9f_data = adata1_genes_filtered[adata1_genes_filtered.obs["CultureMedium"] == "M9F"]
 sc.pl.scatter(
     m9f_data,
@@ -4065,7 +4065,7 @@ ax1.set_ylabel("Total of mRNA genes per Cell Barcode")
 ax1.set_xlim(0, total_counts_max)
 ax1.set_ylim(0, n_genes_max)
 
-# Données M9
+# Plot M9 data
 m9_data = adata1_genes_filtered[adata1_genes_filtered.obs["CultureMedium"] == "M9"]
 sc.pl.scatter(
     m9_data,
