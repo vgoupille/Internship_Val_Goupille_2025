@@ -217,6 +217,13 @@ def add_gene_metadata_to_anndata(adata, ncbi_df):
     for col in ncbi_columns_to_add:
         adata.var[col] = ncbi_filtered[col].values
 
+    # Remove redundant columns
+    columns_to_remove = ["feature_id", "feature_type"]
+    for col in columns_to_remove:
+        if col in adata.var.columns:
+            adata.var = adata.var.drop(columns=[col])
+            print(f"✓ Removed redundant column: {col}")
+
     # Add metadata about the enrichment
     adata.uns["gene_metadata_added"] = True
     adata.uns["gene_metadata_source"] = "ncbi_dataset_with_id.tsv"
@@ -226,7 +233,115 @@ def add_gene_metadata_to_anndata(adata, ncbi_df):
     print(f"✓ {len(ncbi_columns_to_add)} metadata columns added")
     print(f"✓ Genes with metadata: {len(ncbi_filtered)}/{len(gene_names)}")
 
+    # Use final_gene_name as new reference column (index)
+    if "final_gene_name" in adata.var.columns:
+        print("✓ Setting final_gene_name as new gene index...")
+        adata.var.index = adata.var["final_gene_name"]
+        adata.var.index.name = "gene_name"  # Set a descriptive name for the new index
+
+        # Check for duplicate gene names
+        duplicates = adata.var.index.duplicated()
+        if duplicates.any():
+            print(f"⚠️  Warning: Found {duplicates.sum()} duplicate gene names")
+        else:
+            print("✓ No duplicate gene names found")
+    else:
+        print("⚠️  Warning: final_gene_name column not found, keeping original index")
+
     return adata
+
+
+def check_columns_after_metadata_addition(adata, filename):
+    """
+    Check and display detailed information about columns after metadata addition
+
+    Args:
+        adata: AnnData object with metadata
+        filename: Name of the file being processed
+    """
+    print(f"\n=== DETAILED COLUMN CHECK FOR {filename} ===")
+
+    # Cell metadata (obs) check
+    print("\n🔍 CELL METADATA (obs) COLUMNS:")
+    print(f"Total columns: {len(adata.obs.columns)}")
+    print("-" * 60)
+
+    for i, col in enumerate(adata.obs.columns, 1):
+        dtype = str(adata.obs[col].dtype)
+        n_missing = adata.obs[col].isna().sum()
+        n_unique = adata.obs[col].nunique()
+
+        print(
+            f"{i:2d}. {col:<25} | Type: {dtype:<10} | Missing: {n_missing:>4} | Unique: {n_unique:>4}"
+        )
+
+        # Show some example values for categorical columns
+        if dtype == "object" and n_unique < 20:
+            unique_vals = adata.obs[col].dropna().unique()
+            if len(unique_vals) > 0:
+                vals_str = ", ".join(str(v) for v in unique_vals[:5])
+                if len(unique_vals) > 5:
+                    vals_str += f" ... (+{len(unique_vals)-5} more)"
+                print(f"     Values: {vals_str}")
+
+    # Gene metadata (var) check
+    print(f"\n🔍 GENE METADATA (var) COLUMNS:")
+    print(f"Total columns: {len(adata.var.columns)}")
+    print("-" * 60)
+
+    for i, col in enumerate(adata.var.columns, 1):
+        dtype = str(adata.var[col].dtype)
+        n_missing = adata.var[col].isna().sum()
+        n_unique = adata.var[col].nunique()
+
+        print(
+            f"{i:2d}. {col:<25} | Type: {dtype:<10} | Missing: {n_missing:>4} | Unique: {n_unique:>4}"
+        )
+
+        # Show some example values for categorical columns
+        if dtype == "object" and n_unique < 20 and n_unique > 1:
+            unique_vals = adata.var[col].dropna().unique()
+            if len(unique_vals) > 0:
+                vals_str = ", ".join(str(v) for v in unique_vals[:5])
+                if len(unique_vals) > 5:
+                    vals_str += f" ... (+{len(unique_vals)-5} more)"
+                print(f"     Values: {vals_str}")
+
+    # Additional information
+    print(f"\n📊 ADDITIONAL INFORMATION:")
+    print(f"- Total cells: {adata.n_obs}")
+    print(f"- Total genes: {adata.n_vars}")
+
+    # Check for metadata-related columns
+    well_columns = [col for col in adata.obs.columns if col.startswith("Well_loc_")]
+    if well_columns:
+        print(f"- Well location columns: {len(well_columns)}")
+        for col in well_columns:
+            n_filled = (~adata.obs[col].isna()).sum()
+            print(f"  * {col}: {n_filled}/{adata.n_obs} cells with well info")
+
+    # Check for key experimental columns
+    key_columns = ["Condition", "CultureMedium", "Strain", "Treatment"]
+    present_key_cols = [col for col in key_columns if col in adata.obs.columns]
+    if present_key_cols:
+        print(f"- Key experimental columns present: {present_key_cols}")
+        for col in present_key_cols:
+            n_filled = (~adata.obs[col].isna()).sum()
+            unique_vals = adata.obs[col].dropna().unique()
+            print(
+                f"  * {col}: {n_filled}/{adata.n_obs} cells, {len(unique_vals)} unique values"
+            )
+
+    # Check uns for metadata info
+    if "gene_metadata_added" in adata.uns:
+        print(
+            f"- Gene metadata source: {adata.uns.get('gene_metadata_source', 'Unknown')}"
+        )
+        print(
+            f"- Genes with metadata: {adata.uns.get('genes_with_metadata', 'Unknown')}/{adata.uns.get('total_genes', 'Unknown')}"
+        )
+
+    print("=" * 60)
 
 
 def process_anndata_objects(
@@ -306,25 +421,15 @@ def process_anndata_objects(
             print("\n2. Adding gene metadata...")
             adata = add_gene_metadata_to_anndata(adata, ncbi_df)
 
-            # Save completely enriched object with metadata suffix
-            input_filename = Path(file_path).stem  # Get filename without extension
+            # STEP 3: Check columns after metadata addition
+            input_filename = Path(file_path).stem
             output_filename = f"{input_filename}_with_metadata.h5ad"
+            check_columns_after_metadata_addition(adata, output_filename)
+
+            # Save completely enriched object with metadata suffix
             output_file = Path(output_dir) / output_filename
             adata.write_h5ad(output_file)
-            print(f"\n✓ Completely enriched object saved: {output_file}")
-
-            # Display summary
-            print(f"\nSummary for {output_filename}:")
-            print(
-                f"  - Cells with metadata: {sum(~adata.obs['Well_loc_rd1'].isna())}/{len(adata)}"
-            )
-            print(f"  - Cell metadata columns: {len(adata.obs.columns)}")
-            print(f"  - Gene metadata columns: {len(adata.var.columns)}")
-
-            if "Condition" in adata.obs:
-                print(f"  - Unique conditions: {adata.obs['Condition'].unique()}")
-            if "CultureMedium" in adata.obs:
-                print(f"  - Culture media: {adata.obs['CultureMedium'].unique()}")
+            print(f"\n✅ Completely enriched object saved: {output_file}")
 
         except Exception as e:
             print(f"❌ Error processing {file_path}: {e}")

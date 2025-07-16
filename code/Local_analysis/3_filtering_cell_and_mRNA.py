@@ -21,83 +21,12 @@ path_to_anndata = "data/anndata_objects_with_complete_metadata/"
 # %% see the dir with the anndata objects
 os.listdir(path_to_anndata)
 # %%
-adata_original = ad.read_h5ad(path_to_anndata + "GeneFull_raw_unique_mult.h5ad")
+adata_original = ad.read_h5ad(
+    path_to_anndata + "GeneFull_raw_unique_mult_with_metadata.h5ad"
+)
 
 # %%
 adata = adata_original.copy()
-
-
-# %% Load annotation file and update Chromosome column
-print("Loading annotation file...")
-annotation_df = pd.read_csv("data/extracted_features_no_duplicates.tsv", sep="\t")
-print(
-    f"Annotation file loaded with {len(annotation_df)} rows and columns: {annotation_df.columns.tolist()}"
-)
-
-# Check if final_gene_name column exists in annotation
-if "final_gene_name" in annotation_df.columns:
-    print("'final_gene_name' column found in annotation file")
-
-    # Create a mapping from final_gene_name to seq_type
-    gene_to_seqtype = dict(
-        zip(annotation_df["final_gene_name"], annotation_df["seq_type"])
-    )
-
-    # Check how many genes in adata.var_names are in the annotation
-    genes_in_annotation = [gene for gene in adata.var_names if gene in gene_to_seqtype]
-    print(
-        f"Number of genes in adata that are in annotation: {len(genes_in_annotation)} out of {len(adata.var_names)}"
-    )
-
-    # Update the Chromosome column in adata.var
-    if "Chromosome" in adata.var.columns:
-        print("Updating existing Chromosome column...")
-        # Create a new chromosome mapping
-        new_chromosome_values = []
-        for gene in adata.var_names:
-            if gene in gene_to_seqtype:
-                new_chromosome_values.append(gene_to_seqtype[gene])
-            else:
-                new_chromosome_values.append("unknown")
-
-        adata.var["Chromosome"] = new_chromosome_values
-        print("Chromosome column updated successfully!")
-
-        # Show unique values in the updated Chromosome column
-        unique_chromosomes = adata.var["Chromosome"].unique()
-        print(f"Unique values in updated Chromosome column: {unique_chromosomes}")
-
-        # Count genes per chromosome
-        chromosome_counts = adata.var["Chromosome"].value_counts()
-        print("Number of genes per chromosome:")
-        for chrom, count in chromosome_counts.items():
-            print(f"  {chrom}: {count} genes")
-    else:
-        print("Chromosome column not found in adata.var, creating new column...")
-        # Create new chromosome mapping
-        new_chromosome_values = []
-        for gene in adata.var_names:
-            if gene in gene_to_seqtype:
-                new_chromosome_values.append(gene_to_seqtype[gene])
-            else:
-                new_chromosome_values.append("unknown")
-
-        adata.var["Chromosome"] = new_chromosome_values
-        print("New Chromosome column created successfully!")
-
-        # Show unique values in the new Chromosome column
-        unique_chromosomes = adata.var["Chromosome"].unique()
-        print(f"Unique values in new Chromosome column: {unique_chromosomes}")
-
-        # Count genes per chromosome
-        chromosome_counts = adata.var["Chromosome"].value_counts()
-        print("Number of genes per chromosome:")
-        for chrom, count in chromosome_counts.items():
-            print(f"  {chrom}: {count} genes")
-else:
-    print("'final_gene_name' column not found in annotation file!")
-    print("Available columns in annotation file:")
-    pp.pprint(annotation_df.columns.tolist())
 
 
 # Create new Group variable by processing OD values
