@@ -86,13 +86,18 @@ else:
 # Ensure counts are integers
 counts_matrix = counts_matrix.astype(int)
 
-# Get metadata
-metadata = adata_final.obs.copy()
+# Get cell metadata
+cell_metadata = adata_final.obs.copy()
 gene_names = adata_final.var_names.tolist()
 cell_names = adata_final.obs_names.tolist()
 
+# Get gene metadata
+gene_metadata = adata_final.var.copy()
+
 print(f"📊 Matrix shape: {counts_matrix.shape}")
-print(f"📊 Metadata shape: {metadata.shape}")
+print(f"📊 Cell metadata shape: {cell_metadata.shape}")
+print(f"📊 Gene metadata shape: {gene_metadata.shape}")
+print(f"📊 Gene metadata columns: {list(gene_metadata.columns)}")
 
 # %%
 # Convert to R and create Seurat object
@@ -100,14 +105,16 @@ print("🔄 Creating Seurat object in R...")
 
 # Transfer data to R using the new converter approach
 with localconverter(ro.default_converter + pandas2ri.converter):
-    r_metadata = ro.conversion.py2rpy(metadata)
+    r_cell_metadata = ro.conversion.py2rpy(cell_metadata)
+    r_gene_metadata = ro.conversion.py2rpy(gene_metadata)
 
 with localconverter(ro.default_converter + numpy2ri.converter):
     r_counts = ro.conversion.py2rpy(counts_matrix.T)  # Transpose for R (genes x cells)
 
 # Set row and column names in R
 ro.r.assign("counts_matrix", r_counts)
-ro.r.assign("metadata_df", r_metadata)
+ro.r.assign("cell_metadata_df", r_cell_metadata)
+ro.r.assign("gene_metadata_df", r_gene_metadata)
 ro.r.assign("gene_names", ro.StrVector(gene_names))
 ro.r.assign("cell_names", ro.StrVector(cell_names))
 
@@ -117,7 +124,8 @@ ro.r(
 # Set dimensions and names
 rownames(counts_matrix) <- gene_names
 colnames(counts_matrix) <- cell_names
-rownames(metadata_df) <- cell_names
+rownames(cell_metadata_df) <- cell_names
+rownames(gene_metadata_df) <- gene_names
 
 # Convert to sparse matrix for efficiency
 counts_sparse <- Matrix::Matrix(counts_matrix, sparse = TRUE)
@@ -126,13 +134,20 @@ counts_sparse <- Matrix::Matrix(counts_matrix, sparse = TRUE)
 cat("Creating Seurat object...\n")
 seurat_obj <- CreateSeuratObject(
     counts = counts_sparse,
-    meta.data = metadata_df,
+    meta.data = cell_metadata_df,
     project = "BacSC_3c_filtered"
 )
+
+# Add gene metadata to the Seurat object
+cat("Adding gene metadata to Seurat object...\n")
+seurat_obj[["RNA"]]@meta.data <- gene_metadata_df
 
 # Print basic information
 cat("✅ Seurat object created successfully\n")
 print(seurat_obj)
+
+# Check gene metadata was added
+cat("Gene metadata columns:", colnames(seurat_obj[["RNA"]]@meta.data), "\n")
 
 # Check version
 cat("Seurat version:", as.character(packageVersion("Seurat")), "\n")
@@ -189,8 +204,11 @@ tryCatch({
     # Show available assays
     cat("\n🧬 Available assays:", names(test_obj@assays), "\n")
     
-    # Show metadata columns
-    cat("\n📊 Metadata columns:", colnames(test_obj@meta.data), "\n")
+    # Show cell metadata columns
+    cat("\n📊 Cell metadata columns:", colnames(test_obj@meta.data), "\n")
+    
+    # Show gene metadata columns
+    cat("📊 Gene metadata columns:", colnames(test_obj[["RNA"]]@meta.data), "\n")
     
 }, error = function(e) {
     cat("❌ Error verifying RDS file:", e$message, "\n")
@@ -219,7 +237,9 @@ print("\n💡 Usage in R:")
 print(f"   seurat_obj <- readRDS('{output_path}')")
 print("   print(seurat_obj)")
 print("   # Available assays: RNA")
-print("   # Available metadata: all columns from original AnnData")
+print("   # Available cell metadata: all columns from original AnnData obs")
+print("   # Available gene metadata: all columns from original AnnData var")
+print("   # Access gene metadata: seurat_obj[['RNA']]@meta.data")
 
 print("\n🎉 3d AnnData to Seurat V5 conversion completed!")
 
