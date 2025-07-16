@@ -188,40 +188,40 @@ def mark_and_filter_genes_by_group_annotated(
     groupby: str,
     min_pct_cells: float = 0.05,
     annotate_only: bool = True,
-    filter_mode: str = None,  # "union", "intersection", ou None
+    filter_mode: str = None,  # "union", "intersection", or None
     verbose: bool = True,
 ):
     """
-    Annoter (et éventuellement filtrer) les gènes exprimés dans ≥ `min_pct_cells` des cellules
-    pour les groupes définis par `groupby`. Ajoute deux colonnes d'annotation dans `adata.var` :
+    Annotate (and optionally filter) genes expressed in ≥ `min_pct_cells` of cells
+    for groups defined by `groupby`. Adds two annotation columns to `adata.var`:
 
     - gene_pass_union_<groupby>_<xxpct>
     - gene_pass_intersection_<groupby>_<xxpct>
 
-    Paramètres :
+    Parameters:
     -----------
     adata : AnnData
-        Objet AnnData à annoter.
+        AnnData object to annotate.
     groupby : str
-        Nom de la colonne de regroupement dans `adata.obs`.
+        Name of the grouping column in `adata.obs`.
     min_pct_cells : float
-        Seuil de pourcentage (ex: 0.05 pour 5%).
+        Percentage threshold (e.g., 0.05 for 5%).
     annotate_only : bool
-        Si True, ajoute uniquement les colonnes d'annotation.
+        If True, only adds annotation columns.
     filter_mode : str
-        "union", "intersection" ou None. Active le filtrage si non None.
+        "union", "intersection" or None. Activates filtering if not None.
     verbose : bool
-        Affiche les logs.
+        Display logs.
 
-    Retour :
-    -------
-    AnnData annoté (et éventuellement filtré)
+    Returns:
+    --------
+    Annotated (and optionally filtered) AnnData
     """
 
     if groupby not in adata.obs.columns:
-        raise ValueError(f"🛑 '{groupby}' n'existe pas dans adata.obs.")
+        raise ValueError(f"🛑 '{groupby}' does not exist in adata.obs.")
     if filter_mode not in [None, "union", "intersection"]:
-        raise ValueError("🛑 'filter_mode' doit être None, 'union' ou 'intersection'.")
+        raise ValueError("🛑 'filter_mode' must be None, 'union' or 'intersection'.")
 
     is_expressed = adata.X > 0
     n_genes = adata.n_vars
@@ -242,11 +242,9 @@ def mark_and_filter_genes_by_group_annotated(
         intersection_mask &= genes_ok
 
         if verbose:
-            print(
-                f"🔍 {group}: {genes_ok.sum()} gènes retenus (≥ {min_cells} cellules)"
-            )
+            print(f"🔍 {group}: {genes_ok.sum()} genes retained (≥ {min_cells} cells)")
 
-    # Ajoute les colonnes avec noms explicites
+    # Add columns with explicit names
     union_col = f"gene_pass_union_{var_prefix}"
     inter_col = f"gene_pass_intersection_{var_prefix}"
 
@@ -255,9 +253,9 @@ def mark_and_filter_genes_by_group_annotated(
 
     if verbose:
         print(
-            f"✅ Union : {union_mask.sum()} gènes — Intersection : {intersection_mask.sum()} gènes"
+            f"✅ Union: {union_mask.sum()} genes — Intersection: {intersection_mask.sum()} genes"
         )
-        print(f"📝 Colonnes ajoutées : {union_col}, {inter_col}")
+        print(f"📝 Columns added: {union_col}, {inter_col}")
 
     if annotate_only:
         return adata
