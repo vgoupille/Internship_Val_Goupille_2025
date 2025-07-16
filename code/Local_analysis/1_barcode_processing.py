@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
-Barcode Processing for microSPLiT Protocol - Version Simplifiée
-
-Script simplifié pour traiter les barcodes microSPLiT adapté au répertoire actuel.
-
+Barcode Processing for microSPLiT Protocol
 Author: Valentin Goupille
 Date: 2025-05-25
 """
@@ -17,7 +14,7 @@ from pathlib import Path
 
 class SimpleOutputConfig:
     """
-    Configuration simplifiée pour les chemins de sortie
+    Simplified configuration for output paths
     """
 
     def __init__(self, base_output_dir: str = "processed_barcodes"):
@@ -63,7 +60,7 @@ class SimpleOutputConfig:
         """
         output_path = self.get_path(category, filename)
         if format == "txt":
-            # Pour les fichiers starsolo, ne jamais inclure d'en-tête
+            # For starsolo files, never include header
             if category in ["starsolo_filtered", "starsolo_non_filtered"]:
                 df.to_csv(output_path, index=False, header=False)
             else:
@@ -88,16 +85,70 @@ def filter_barcodes_rd1(
     df: pd.DataFrame, sequences_to_remove: List[str]
 ) -> pd.DataFrame:
     """
-    Filter out unnecessary sequences from round 1
+    Filter out problematic sequences from round 1
+
+    Args:
+        df: DataFrame containing round 1 barcodes
+        sequences_to_remove: List of barcode sequences to exclude
+
+    Returns:
+        DataFrame with filtered barcodes (problematic sequences removed)
     """
-    return df[~df["Extracted_Sequence_rd1"].isin(sequences_to_remove)]
+    initial_count = len(df)
+    filtered_df = df[~df["Extracted_Sequence_rd1"].isin(sequences_to_remove)]
+    removed_count = initial_count - len(filtered_df)
+
+    print(
+        f"    Round 1: {initial_count} → {len(filtered_df)} barcodes ({removed_count} removed)"
+    )
+    return filtered_df
+
+
+def filter_barcodes_rd2(
+    df: pd.DataFrame, sequences_to_remove: List[str]
+) -> pd.DataFrame:
+    """
+    Filter out problematic sequences from round 2
+
+    Args:
+        df: DataFrame containing round 2 barcodes
+        sequences_to_remove: List of barcode sequences to exclude
+
+    Returns:
+        DataFrame with filtered barcodes (problematic sequences removed)
+    """
+    initial_count = len(df)
+    if sequences_to_remove:
+        filtered_df = df[~df["Extracted_Sequence_rd2"].isin(sequences_to_remove)]
+    else:
+        filtered_df = df  # No filtering if list is empty
+    removed_count = initial_count - len(filtered_df)
+
+    print(
+        f"    Round 2: {initial_count} → {len(filtered_df)} barcodes ({removed_count} removed)"
+    )
+    return filtered_df
 
 
 def filter_barcodes_rd3(df: pd.DataFrame, barcode_to_remove: str) -> pd.DataFrame:
     """
-    Filter out specific barcode from round 3
+    Filter out problematic barcode from round 3
+
+    Args:
+        df: DataFrame containing round 3 barcodes
+        barcode_to_remove: Specific barcode sequence to exclude
+
+    Returns:
+        DataFrame with filtered barcodes (problematic sequence removed)
     """
-    return df[df["Extracted_Sequence_rd3"] != barcode_to_remove]
+    initial_count = len(df)
+    filtered_df = df[df["Extracted_Sequence_rd3"] != barcode_to_remove]
+    removed_count = initial_count - len(filtered_df)
+
+    print(
+        f"    Round 3: {initial_count} → {len(filtered_df)} barcodes ({removed_count} removed)"
+    )
+    return filtered_df
 
 
 def create_barqc_file(
@@ -127,118 +178,156 @@ def main():
     """
     Main function to process barcodes
     """
-    print("=== Barcode Processing for microSPLiT Protocol - Version Simplifiée ===")
+    print("=== Barcode Processing for microSPLiT Protocol - Simplified Version ===")
     print()
 
-    # Configuration simple - utiliser le fichier Excel dans le répertoire actuel
-    input_file = "metadata_DOL_rep1.xlsx"
+    # =============================================================================
+    # BARCODE FILTERING CONFIGURATION
+    # =============================================================================
+    # These barcodes will be EXCLUDED from the analysis
+    # Modify these lists if you need to add/remove filtered barcodes
 
-    # Vérifier que le fichier existe
+    # Round 1 barcodes to REMOVE (not used for the analysis)
+    sequences_to_remove_rd1 = [
+        "CGTCTAGG",  # Remove this barcode from round 1
+        "TCACTTTA",  # Remove this barcode from round 1
+        "GCTGCATG",  # Remove this barcode from round 1
+        "GAGGTTGA",  # Remove this barcode from round 1
+        "GCTATGCG",  # Remove this barcode from round 1
+        "CTGAAAGG",  # Remove this barcode from round 1
+    ]
+
+    # Round 2 barcodes to REMOVE
+    # Currently NO barcodes are filtered for round 2
+    # Add sequences here if needed: sequences_to_remove_rd2 = ["SEQUENCE1", "SEQUENCE2"]
+    sequences_to_remove_rd2 = []
+
+    # Round 3 barcodes to REMOVE
+    # This barcode is removed
+    barcode_to_remove_rd3 = "GCCAAGAC"
+
+    print(f"✓ Filtering configuration loaded:")
+    print(f"  - Round 1: {len(sequences_to_remove_rd1)} barcodes will be removed")
+    print(f"  - Round 2: {len(sequences_to_remove_rd2)} barcodes will be removed")
+    print(f"  - Round 3: 1 barcode will be removed ({barcode_to_remove_rd3})")
+    print()
+
+    # =============================================================================
+    # FILE CONFIGURATION
+    # =============================================================================
+
+    # Simple configuration - use Excel file in data/tab directory
+    input_file = "data/tab/metadata_DOL_rep1.xlsx"
+
+    # Check if file exists
     if not Path(input_file).exists():
-        print(
-            f"❌ Erreur : Le fichier {input_file} n'existe pas dans le répertoire actuel"
-        )
-        print(f"Répertoire actuel : {Path.cwd()}")
-        print(
-            "Veuillez placer le fichier Excel dans ce répertoire ou modifier le nom du fichier"
-        )
+        print(f"❌ Error: The file {input_file} does not exist")
+        print(f"Current directory: {Path.cwd()}")
+        print("Please ensure the Excel file is in the data/tab/ directory")
         return
 
-    print(f"✓ Fichier d'entrée trouvé : {input_file}")
+    print(f"✓ Input file found: {input_file}")
 
-    # Configuration de sortie
-    output_config = SimpleOutputConfig("processed_barcodes")
+    # Output configuration
+    output_config = SimpleOutputConfig("data/barcodes_result")
     output_config.setup_directories()
 
-    print(f"✓ Répertoire de sortie configuré : {output_config.base_dir}")
+    print(f"✓ Output directory configured: {output_config.base_dir}")
 
     try:
         # Read input files
-        print("\nLecture des fichiers d'entrée...")
-        df_Metadata_DOL_Exp1 = pd.read_excel(input_file, sheet_name="Exp1")
-        df_Barcode_rd1 = pd.read_excel(input_file, sheet_name="Barcode.rd1")
-        df_Barcode_rd2 = pd.read_excel(input_file, sheet_name="Barcode.rd2")
-        df_Barcode_rd3 = pd.read_excel(input_file, sheet_name="Barcode.rd3")
+        print("\nReading input files...")
+        df_metadata_dol_exp1 = pd.read_excel(input_file, sheet_name="Exp1")
+        df_barcode_rd1 = pd.read_excel(input_file, sheet_name="Barcode.rd1")
+        df_barcode_rd2 = pd.read_excel(input_file, sheet_name="Barcode.rd2")
+        df_barcode_rd3 = pd.read_excel(input_file, sheet_name="Barcode.rd3")
 
-        print("✓ Fichiers d'entrée lus avec succès")
+        print("✓ Input files read successfully")
 
         # Extract sequences for each round
-        print("\nExtraction des séquences de barcodes...")
-        df_Barcode_rd1 = extract_barcode_sequence(
-            df_Barcode_rd1, "Sequence", r"/5Phos/ACTGTGG(.*?)TTTTTTTTTTTTTTTVN"
+        print("\nExtracting barcode sequences...")
+        df_barcode_rd1 = extract_barcode_sequence(
+            df_barcode_rd1, "Sequence", r"/5Phos/ACTGTGG(.*?)TTTTTTTTTTTTTTTVN"
         )
-        df_Barcode_rd2 = extract_barcode_sequence(
-            df_Barcode_rd2, "Sequence", r"/5Phos/CATCGGCGTACGACT(.*?)ATCCACGTGCTTGAG"
+        df_barcode_rd2 = extract_barcode_sequence(
+            df_barcode_rd2, "Sequence", r"/5Phos/CATCGGCGTACGACT(.*?)ATCCACGTGCTTGAG"
         )
-        df_Barcode_rd3 = extract_barcode_sequence(
-            df_Barcode_rd3,
+        df_barcode_rd3 = extract_barcode_sequence(
+            df_barcode_rd3,
             "Sequence",
             r"/5Biosg/CAGACGTGTGCTCTTCCGATCTNNNNNNNNNN(.*?)GTGGCCGATGTTTCG",
         )
 
-        print("✓ Séquences extraites")
+        print("✓ Sequences extracted")
 
         # Save non-filtered barcodes for STARsolo
-        print("\nSauvegarde des barcodes non filtrés pour STARsolo...")
+        print("\nSaving non-filtered barcodes for STARsolo...")
         output_config.save_file(
-            df_Barcode_rd1[["Extracted_Sequence_rd1"]],
+            df_barcode_rd1[["Extracted_Sequence_rd1"]],
             "starsolo_non_filtered",
             "barcode_rd1.txt",
         )
         output_config.save_file(
-            df_Barcode_rd2[["Extracted_Sequence_rd2"]],
+            df_barcode_rd2[["Extracted_Sequence_rd2"]],
             "starsolo_non_filtered",
             "barcode_rd2.txt",
         )
         output_config.save_file(
-            df_Barcode_rd3[["Extracted_Sequence_rd3"]],
+            df_barcode_rd3[["Extracted_Sequence_rd3"]],
             "starsolo_non_filtered",
             "barcode_rd3.txt",
         )
 
-        print("✓ Barcodes non filtrés sauvegardés")
+        print("✓ Non-filtered barcodes saved")
 
         # Filter barcodes
-        print("\nFiltrage des barcodes...")
-        sequences_to_remove_rd1 = [
-            "CGTCTAGG",
-            "TCACTTTA",
-            "GCTGCATG",
-            "GAGGTTGA",
-            "GCTATGCG",
-            "CTGAAAGG",
-        ]
-        df_Barcode_rd1_filtered = filter_barcodes_rd1(
-            df_Barcode_rd1, sequences_to_remove_rd1
+        print("\nFiltering barcodes...")
+        print(
+            f"  - Applying filters to Round 1: removing {len(sequences_to_remove_rd1)} sequences"
         )
-        df_Barcode_rd3_filtered = filter_barcodes_rd3(df_Barcode_rd3, "GCCAAGAC")
+        print(
+            f"  - Applying filters to Round 2: removing {len(sequences_to_remove_rd2)} sequences"
+        )
+        print(
+            f"  - Applying filters to Round 3: removing 1 sequence ({barcode_to_remove_rd3})"
+        )
 
-        print("✓ Barcodes filtrés")
+        df_barcode_rd1_filtered = filter_barcodes_rd1(
+            df_barcode_rd1, sequences_to_remove_rd1
+        )
+        df_barcode_rd2_filtered = filter_barcodes_rd2(
+            df_barcode_rd2, sequences_to_remove_rd2
+        )
+        df_barcode_rd3_filtered = filter_barcodes_rd3(
+            df_barcode_rd3, barcode_to_remove_rd3
+        )
+
+        print("✓ Barcodes filtered")
 
         # Save filtered barcodes for STARsolo
-        print("\nSauvegarde des barcodes filtrés pour STARsolo...")
+        print("\nSaving filtered barcodes for STARsolo...")
         output_config.save_file(
-            df_Barcode_rd1_filtered[["Extracted_Sequence_rd1"]],
+            df_barcode_rd1_filtered[["Extracted_Sequence_rd1"]],
             "starsolo_filtered",
             "barcode_rd1_filtered.txt",
         )
         output_config.save_file(
-            df_Barcode_rd2[["Extracted_Sequence_rd2"]],
+            df_barcode_rd2_filtered[["Extracted_Sequence_rd2"]],
             "starsolo_filtered",
             "barcode_rd2_filtered.txt",
         )
         output_config.save_file(
-            df_Barcode_rd3_filtered[["Extracted_Sequence_rd3"]],
+            df_barcode_rd3_filtered[["Extracted_Sequence_rd3"]],
             "starsolo_filtered",
             "barcode_rd3_filtered.txt",
         )
 
-        print("✓ Barcodes filtrés sauvegardés")
+        print("✓ Filtered barcodes saved")
 
         # Create BarQC files for each round
-        print("\nCréation des fichiers BarQC...")
+        print("\nCreating BarQC files...")
         barqc_rd1 = create_barqc_file(
-            df_Barcode_rd1_filtered,
+            df_barcode_rd1_filtered,
             "Well_loc_rd1",
             "Extracted_Sequence_rd1",
             "barcode_rd1_barqc.csv",
@@ -247,7 +336,7 @@ def main():
         )
 
         barqc_rd2 = create_barqc_file(
-            df_Barcode_rd2,
+            df_barcode_rd2_filtered,
             "Well_loc_rd2",
             "Extracted_Sequence_rd2",
             "barcode_rd2_barqc.csv",
@@ -256,7 +345,7 @@ def main():
         )
 
         barqc_rd3 = create_barqc_file(
-            df_Barcode_rd3_filtered,
+            df_barcode_rd3_filtered,
             "Well_loc_rd3",
             "Extracted_Sequence_rd3",
             "barcode_rd3_barqc.csv",
@@ -264,20 +353,20 @@ def main():
             output_config,
         )
 
-        print("✓ Fichiers BarQC créés")
+        print("✓ BarQC files created")
 
         # Metadata Integration
-        print("\nIntégration des métadonnées...")
-        df_Metadata_DOL_Exp1_complete = pd.merge(
-            df_Metadata_DOL_Exp1,
-            df_Barcode_rd1_filtered[["Well_loc_rd1", "Extracted_Sequence_rd1"]],
+        print("\nIntegrating metadata...")
+        df_metadata_dol_exp1_complete = pd.merge(
+            df_metadata_dol_exp1,
+            df_barcode_rd1_filtered[["Well_loc_rd1", "Extracted_Sequence_rd1"]],
             on="Well_loc_rd1",
             how="left",
         )
 
         # Save metadata
         output_config.save_file(
-            df_Metadata_DOL_Exp1_complete,
+            df_metadata_dol_exp1_complete,
             "metadata",
             "metadata_DOL_Exp1_complete.csv",
             format="txt",
@@ -285,29 +374,29 @@ def main():
         )
 
         output_config.save_file(
-            df_Metadata_DOL_Exp1_complete,
+            df_metadata_dol_exp1_complete,
             "metadata",
             "metadata_DOL_Exp1_complete.xlsx",
             format="xlsx",
         )
 
-        print("✓ Métadonnées intégrées et sauvegardées")
+        print("✓ Metadata integrated and saved")
 
         # Barcode Combinations Generation
-        print("\nGénération des combinaisons de barcodes...")
+        print("\nGenerating barcode combinations...")
 
         # Read the barcodes for combinations
-        df_barcode_rd1 = pd.read_csv(
+        df_barcode_rd1_for_combinations = pd.read_csv(
             output_config.get_path("starsolo_non_filtered", "barcode_rd1.txt"),
             header=None,
             names=["Extracted_Sequence_rd1"],
         )
-        df_barcode_rd2 = pd.read_csv(
+        df_barcode_rd2_for_combinations = pd.read_csv(
             output_config.get_path("starsolo_non_filtered", "barcode_rd2.txt"),
             header=None,
             names=["Extracted_Sequence_rd2"],
         )
-        df_barcode_rd3 = pd.read_csv(
+        df_barcode_rd3_for_combinations = pd.read_csv(
             output_config.get_path("starsolo_non_filtered", "barcode_rd3.txt"),
             header=None,
             names=["Extracted_Sequence_rd3"],
@@ -315,7 +404,12 @@ def main():
 
         # Create non-filtered combinations
         final_df_non_filtered = pd.concat(
-            [df_barcode_rd1, df_barcode_rd2, df_barcode_rd3], axis=1
+            [
+                df_barcode_rd1_for_combinations,
+                df_barcode_rd2_for_combinations,
+                df_barcode_rd3_for_combinations,
+            ],
+            axis=1,
         )
 
         combinations_non_filtered = [
@@ -340,17 +434,17 @@ def main():
         )
 
         # Read filtered barcodes
-        df_barcode_rd1_filtered = pd.read_csv(
+        df_barcode_rd1_filtered_for_combinations = pd.read_csv(
             output_config.get_path("starsolo_filtered", "barcode_rd1_filtered.txt"),
             header=None,
             names=["Extracted_Sequence_rd1"],
         )
-        df_barcode_rd2_filtered = pd.read_csv(
+        df_barcode_rd2_filtered_for_combinations = pd.read_csv(
             output_config.get_path("starsolo_filtered", "barcode_rd2_filtered.txt"),
             header=None,
             names=["Extracted_Sequence_rd2"],
         )
-        df_barcode_rd3_filtered = pd.read_csv(
+        df_barcode_rd3_filtered_for_combinations = pd.read_csv(
             output_config.get_path("starsolo_filtered", "barcode_rd3_filtered.txt"),
             header=None,
             names=["Extracted_Sequence_rd3"],
@@ -358,7 +452,11 @@ def main():
 
         # Create filtered combinations
         final_df_filtered = pd.concat(
-            [df_barcode_rd1_filtered, df_barcode_rd2_filtered, df_barcode_rd3_filtered],
+            [
+                df_barcode_rd1_filtered_for_combinations,
+                df_barcode_rd2_filtered_for_combinations,
+                df_barcode_rd3_filtered_for_combinations,
+            ],
             axis=1,
         )
 
@@ -383,14 +481,19 @@ def main():
             format="txt",
         )
 
-        print("✓ Combinaisons de barcodes générées")
+        print("✓ Barcode combinations generated")
 
         # Extracted Barcodes Generation
-        print("\nGénération des barcodes extraits...")
+        print("\nGenerating extracted barcodes...")
 
         # Create extracted barcodes files
         extracted_barcodes_non_filtered = pd.concat(
-            [df_barcode_rd1, df_barcode_rd2, df_barcode_rd3], axis=1
+            [
+                df_barcode_rd1_for_combinations,
+                df_barcode_rd2_for_combinations,
+                df_barcode_rd3_for_combinations,
+            ],
+            axis=1,
         )
 
         output_config.save_file(
@@ -401,7 +504,11 @@ def main():
         )
 
         extracted_barcodes_filtered = pd.concat(
-            [df_barcode_rd1_filtered, df_barcode_rd2_filtered, df_barcode_rd3_filtered],
+            [
+                df_barcode_rd1_filtered_for_combinations,
+                df_barcode_rd2_filtered_for_combinations,
+                df_barcode_rd3_filtered_for_combinations,
+            ],
             axis=1,
         )
 
@@ -412,11 +519,11 @@ def main():
             format="txt",
         )
 
-        print("✓ Barcodes extraits générés")
+        print("✓ Extracted barcodes generated")
 
         # Summary
         print("\n" + "=" * 60)
-        print("RÉSUMÉ DES FICHIERS GÉNÉRÉS")
+        print("SUMMARY OF GENERATED FILES")
         print("=" * 60)
 
         categories = {
@@ -429,7 +536,7 @@ def main():
         }
 
         for category_name, category in categories.items():
-            print(f"\n{category_name} :")
+            print(f"\n{category_name}:")
             print("-" * 30)
             directory = output_config.directories[category]
             if directory.exists():
@@ -438,16 +545,16 @@ def main():
                     for file in sorted(files):
                         print(f"✓ {file.name}")
                 else:
-                    print("Aucun fichier trouvé")
+                    print("No files found")
             else:
-                print(f"✗ Répertoire non trouvé : {directory}")
+                print(f"✗ Directory not found: {directory}")
 
-        print(f"\nTous les fichiers sont sauvegardés dans : {output_config.base_dir}")
-        print("\nTraitement terminé avec succès ! 🎉")
+        print(f"\nAll files are saved in: {output_config.base_dir}")
+        print("\nProcessing completed successfully! 🎉")
 
     except Exception as e:
-        print(f"\n❌ Erreur lors du traitement : {e}")
-        print("Veuillez vérifier que le fichier Excel contient les bonnes feuilles :")
+        print(f"\n❌ Error during processing: {e}")
+        print("Please check that the Excel file contains the correct sheets:")
         print("- Exp1")
         print("- Barcode.rd1")
         print("- Barcode.rd2")
