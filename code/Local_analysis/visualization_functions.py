@@ -235,11 +235,12 @@ def plot_cell_counts_comparison(
 def plot_stacked_bar_by_odt(adata, figsize_per_plot=6):
     """
     Create stacked bar plots grouped by ODt showing RepBio and RepTech_suffix distribution.
+    Uses group logic combining CultureMedium and ODt (e.g., M9_sampling_t1, M9F_sampling_t2).
 
     Parameters:
     -----------
     adata : AnnData
-        AnnData object with obs containing ODt, RepBio, and RepTech_suffix columns
+        AnnData object with obs containing ODt, RepBio, CultureMedium, and RepTech_suffix columns
     figsize_per_plot : int
         Width of each subplot
     """
@@ -247,64 +248,123 @@ def plot_stacked_bar_by_odt(adata, figsize_per_plot=6):
     if "RepTech_suffix" not in adata.obs.columns:
         adata.obs["RepTech_suffix"] = adata.obs["RepTech"].str.split("_").str[-1]
 
-    # Grouper les données
+    # Création de la colonne de regroupement 'group' selon la logique demandée
+    def assign_group(row):
+        prefix = row["CultureMedium"]  # M9 ou M9F
+        odt = row["ODt"]
+        if odt == "OD1":
+            suffix = "sampling_t1"
+        elif odt == "OD2":
+            suffix = "sampling_t2"
+        elif odt == "OD3":
+            suffix = "sampling_t3"
+        else:
+            suffix = "sampling_unknown"
+        return f"{prefix}_{suffix}"
+
+    # Create the group column
+    adata.obs["group"] = adata.obs.apply(assign_group, axis=1)
+
+    # Grouper les données par la nouvelle colonne 'group', RepBio et RepTech_suffix
     counts = (
-        adata.obs.groupby(["ODt", "RepBio", "RepTech_suffix"])
+        adata.obs.groupby(["group", "RepBio", "RepTech_suffix"])
         .size()
         .reset_index(name="counts")
     )
 
-    # Paramètres
-    odt_values = counts["ODt"].unique()
-    n = len(odt_values)
+    # Obtenir la liste des groupes (panels)
+    group_labels = sorted(counts["group"].unique())
+    n = len(group_labels)
 
-    all_suffixes = sorted(counts["RepTech_suffix"].unique())
+    # Define fixed order of suffixes to ensure consistent colors across scripts
+    ALL_POSSIBLE_SUFFIXES = ["1", "2", "3", "4", "5"]
+    available_suffixes = sorted(counts["RepTech_suffix"].unique())
+
+    # Use fixed color mapping based on all possible suffixes
     colors = plt.get_cmap("tab20").colors
     color_map = {
-        suffix: colors[i % len(colors)] for i, suffix in enumerate(all_suffixes)
+        suffix: colors[i % len(colors)]
+        for i, suffix in enumerate(ALL_POSSIBLE_SUFFIXES)
     }
 
     # Création des sous-graphes
-    fig, axes = plt.subplots(1, n, figsize=(figsize_per_plot * n, 6), sharey=True)
+    fig, axes = plt.subplots(1, n, figsize=(figsize_per_plot * n, 8), sharey=True)
 
     if n == 1:
         axes = [axes]
 
     total_all = 0
 
-    for ax, odt in zip(axes, odt_values):
-        df_odt = counts[counts["ODt"] == odt]
-        pivot_df = df_odt.pivot(
+    for ax, group in zip(axes, group_labels):
+        df_group = counts[counts["group"] == group]
+
+        # Extraire culture_medium (M9 ou M9F) et temps
+        culture_medium = group.split("_")[0]  # M9 ou M9F
+        sampling_time = group.split("_")[1]  # sampling_t1, sampling_t2, sampling_t3
+
+        # Définir les RepBio attendus pour ce groupe
+        if culture_medium == "M9":
+            expected_repbios = ["M9_A", "M9_B", "M9_C"]
+        elif culture_medium == "M9F":
+            expected_repbios = ["M9F_A", "M9F_B", "M9F_C"]
+        else:
+            expected_repbios = []
+
+        # Filtrer pour garder seulement les RepBio attendus
+        df_group = df_group[df_group["RepBio"].isin(expected_repbios)]
+
+        # Pivot pour format barres empilées
+        pivot_df = df_group.pivot(
             index="RepBio", columns="RepTech_suffix", values="counts"
         ).fillna(0)
-        pivot_df = pivot_df.reindex(columns=all_suffixes, fill_value=0)
 
+        # Réorganiser les colonnes dans l'ordre attendu
+        pivot_df = pivot_df.reindex(columns=available_suffixes, fill_value=0)
+
+        # Réorganiser les lignes dans l'ordre attendu
+        if culture_medium == "M9":
+            pivot_df = pivot_df.reindex(index=["M9_A", "M9_B", "M9_C"], fill_value=0)
+        elif culture_medium == "M9F":
+            pivot_df = pivot_df.reindex(index=["M9F_A", "M9F_B", "M9F_C"], fill_value=0)
+
+        # Plot empilé
         pivot_df.plot(
             kind="bar",
             stacked=True,
             ax=ax,
             color=[color_map[col] for col in pivot_df.columns],
             legend=False,
+            width=0.8,
         )
-
         bar_sums = pivot_df.sum(axis=1)
         total_plot = bar_sums.sum()
         total_all += total_plot
 
-        ax.set_title(f"ODt = {odt}\nTotal barcodes: n={int(total_plot)}", fontsize=14)
+        # Couleur du titre selon le medium
+        title_color = "green" if "M9F" in group else "red"
+        ax.set_title(
+            f"{group}\nTotal barcodes: n={int(total_plot)}",
+            fontsize=16,
+            fontweight="bold",
+            color=title_color,
+            pad=20,
+            y=1.02,
+        )
         ax.set_xlabel("")
-        ax.set_ylabel("Total of Barcode Cells", fontsize=12)
+        ax.set_ylabel("Total of Barcode Cells", fontsize=14, fontweight="bold")
 
-        # Couleur des étiquettes X
+        # Couleur des étiquettes X : vert si M9F, rouge si M9
         xtick_labels = pivot_df.index.tolist()
         colors_xticks = ["green" if "M9F" in label else "red" for label in xtick_labels]
         ax.set_xticks(np.arange(len(xtick_labels)))
-        ax.set_xticklabels(xtick_labels, rotation=0, ha="center")
+        ax.set_xticklabels(
+            xtick_labels, rotation=0, ha="center", fontsize=12, fontweight="bold"
+        )
 
         for label, color in zip(ax.get_xticklabels(), colors_xticks):
             label.set_color(color)
 
-        # (n=...) au-dessus des barres
+        # Affichage des counts (n=...) au-dessus des barres
         for i, val in enumerate(bar_sums):
             ax.text(
                 i,
@@ -312,7 +372,7 @@ def plot_stacked_bar_by_odt(adata, figsize_per_plot=6):
                 f"(n={int(val)})",
                 ha="center",
                 va="bottom",
-                fontsize=8,
+                fontsize=14,
                 fontweight="bold",
             )
 
@@ -323,18 +383,19 @@ def plot_stacked_bar_by_odt(adata, figsize_per_plot=6):
         labels,
         title="RepTech",
         loc="center right",
-        fontsize=9,
-        title_fontsize=10,
+        bbox_to_anchor=(0.85, 0.5),
+        fontsize=16,
+        title_fontsize=18,
     )
 
     # Total global en haut à gauche
     fig.text(
         0.01,
         1.02,
-        f"Total barcodes across all ODt = {int(total_all)}",
+        f"Total barcodes across all groups = {int(total_all)}",
         ha="left",
         va="bottom",
-        fontsize=12,
+        fontsize=14,
         fontweight="bold",
         color="black",
     )
@@ -348,28 +409,28 @@ def plot_stacked_bar_by_odt(adata, figsize_per_plot=6):
         .astype(int)
     )
 
-    # Affichage en haut à gauche, sous le total global
+    # Affichage juste à droite du total global
     fig.text(
-        0.01,
-        0.99,
-        f"Total M9  = {total_by_medium['M9']}",
+        0.15,
+        1.02,
+        f"Total M9  = {total_by_medium.get('M9', 0)}",
         ha="left",
-        va="top",
-        fontsize=11,
+        va="bottom",
+        fontsize=12,
         fontweight="bold",
     )
     fig.text(
-        0.01,
-        0.96,
-        f"Total M9F = {total_by_medium['M9F']}",
+        0.15,
+        0.99,
+        f"Total M9F = {total_by_medium.get('M9F', 0)}",
         ha="left",
-        va="top",
-        fontsize=11,
+        va="bottom",
+        fontsize=12,
         fontweight="bold",
     )
 
     # Mise en page finale
-    plt.tight_layout(rect=[0, 0, 0.85, 1])
+    plt.tight_layout(rect=[0, 0, 0.78, 1])
     plt.show()
 
     return total_all, total_by_medium
@@ -806,3 +867,333 @@ def filter_top_n_cells(adata, n=5, metric="n_counts", copy=True):
         print(f"📊 Cells after filtering: {adata.n_obs:,}")
 
         return None
+
+
+def plot_violin_stripplot_by_group(
+    adata,
+    y_column: str,
+    y_label: str,
+    title_suffix: str = "",
+    figsize_per_plot: int = 6,
+    kde_bandwidth: float = 0.3,
+    alpha: float = 0.3,
+    stripplot_size: int = 4,
+    stripplot_alpha: float = 0.9,
+    stripplot_jitter: float = 0.25,
+) -> None:
+    """
+    Create violin + stripplot visualization grouped by ODt/group showing RepBio distribution.
+
+    Parameters:
+    -----------
+    adata : AnnData
+        AnnData object with obs containing the required columns
+    y_column : str
+        Column name to plot on y-axis (e.g., 'n_counts', 'n_genes')
+    y_label : str
+        Label for y-axis (e.g., 'Number of mRNA UMIs per Cell Barcode')
+    title_suffix : str, optional
+        Additional suffix for the title (default: "")
+    figsize_per_plot : int, optional
+        Width of each subplot (default: 6)
+    kde_bandwidth : float, optional
+        Bandwidth for KDE calculation (default: 0.3)
+    alpha : float, optional
+        Transparency for violin plots (default: 0.3)
+    stripplot_size : int, optional
+        Size of points in stripplot (default: 4)
+    stripplot_alpha : float, optional
+        Transparency for stripplot points (default: 0.9)
+    stripplot_jitter : float, optional
+        Jitter amount for stripplot (default: 0.25)
+    """
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import numpy as np
+    from scipy.stats import gaussian_kde
+
+    # Ensure RepTech_suffix exists
+    if "RepTech_suffix" not in adata.obs.columns:
+        adata.obs["RepTech_suffix"] = adata.obs["RepTech"].str.split("_").str[-1]
+
+    # Création de la colonne de regroupement 'group' selon la logique demandée
+    def assign_group(row):
+        prefix = row["CultureMedium"]  # M9 ou M9F
+        odt = row["ODt"]
+        if odt == "OD1":
+            suffix = "sampling_t1"
+        elif odt == "OD2":
+            suffix = "sampling_t2"
+        elif odt == "OD3":
+            suffix = "sampling_t3"
+        else:
+            suffix = "sampling_unknown"
+        return f"{prefix}_{suffix}"
+
+    # Create temporary dataframe for processing
+    df = adata.obs.copy()
+    df["group"] = df.apply(assign_group, axis=1)
+
+    # Ensure y_column exists
+    if y_column not in df.columns:
+        raise ValueError(f"Column '{y_column}' not found in adata.obs")
+
+    # Convert columns to proper types
+    df["RepTech_suffix"] = df["RepTech"].astype(str).str.split("_").str[-1]
+    df["ODt"] = df["ODt"].astype(str)
+    df["RepBio"] = df["RepBio"].astype(str)
+    df["RepTech_suffix"] = df["RepTech_suffix"].astype(str)
+
+    # Paramètres
+    group_labels = sorted(df["group"].unique())
+    n = len(group_labels)
+
+    repbios = sorted(df["RepBio"].unique())
+
+    # Palette tab20 personnalisée dans l'ordre numérique
+    reptech_suffixes = sorted(df["RepTech_suffix"].unique(), key=lambda x: int(x))
+    tab20_colors = sns.color_palette("tab20", n_colors=len(reptech_suffixes))
+    palette = dict(zip(reptech_suffixes, tab20_colors))
+
+    # Groupes à colorer
+    group_vert = ["M9F_A", "M9F_B", "M9F_C"]
+    group_rouge = ["M9_A", "M9_B", "M9_C"]
+    repbio_colors = {
+        repbio: (
+            "green"
+            if repbio in group_vert
+            else "red" if repbio in group_rouge else "gray"
+        )
+        for repbio in repbios
+    }
+
+    # Setup grid - une ligne avec toutes les facettes
+    fig, axes = plt.subplots(1, n, figsize=(figsize_per_plot * n, 6), sharey=True)
+    if n == 1:
+        axes = [axes]
+
+    handles, labels = None, None
+
+    for i, group in enumerate(group_labels):
+        ax = axes[i]
+        data_group = df[df["group"] == group]
+
+        # Extraire culture_medium (M9 ou M9F) pour définir les RepBio attendus
+        culture_medium = group.split("_")[0]  # M9 ou M9F
+
+        # Définir les RepBio attendus pour ce groupe
+        if culture_medium == "M9":
+            expected_repbios = ["M9_A", "M9_B", "M9_C"]
+        elif culture_medium == "M9F":
+            expected_repbios = ["M9F_A", "M9F_B", "M9F_C"]
+        else:
+            expected_repbios = []
+
+        # Filtrer pour garder seulement les RepBio attendus
+        data_group = data_group[data_group["RepBio"].isin(expected_repbios)]
+
+        # Create violin plots using KDE
+        for j, repbio in enumerate(expected_repbios):
+            data_subset = data_group[data_group["RepBio"] == repbio]
+            values = data_subset[y_column].dropna()
+
+            if len(values) < 2:
+                continue
+
+            # KDE
+            kde = gaussian_kde(values, bw_method=kde_bandwidth)
+            x_vals = np.linspace(values.min(), values.max(), 100)
+            density = kde(x_vals)
+            width = 0.4
+            density = density / density.max() * width
+
+            violin_color = repbio_colors.get(repbio, "gray")
+
+            # Tracé du violon
+            ax.fill_betweenx(
+                x_vals,
+                j - density,
+                j + density,
+                color=violin_color,
+                alpha=alpha,
+                linewidth=1,
+            )
+
+            # Affiche n
+            ax.text(
+                j,
+                data_group[y_column].max() * 0.95,
+                f"(n = {len(values)})",
+                ha="center",
+                va="bottom",
+                fontsize=8,
+                fontweight="bold",
+                color="black",
+            )
+
+        # Stripplot avec hue_order pour contrôler l'ordre de la légende
+        sns.stripplot(
+            data=data_group,
+            x="RepBio",
+            y=y_column,
+            hue="RepTech_suffix",
+            dodge=True,
+            jitter=stripplot_jitter,
+            size=stripplot_size,
+            ax=ax,
+            alpha=stripplot_alpha,
+            edgecolor="white",
+            linewidth=0.4,
+            palette=palette,
+            order=expected_repbios,
+            hue_order=reptech_suffixes,  # Ordre numérique 1 à 5
+        )
+
+        if handles is None and ax.get_legend() is not None:
+            handles, labels = ax.get_legend_handles_labels()
+        if ax.get_legend():
+            ax.legend_.remove()
+
+        # Couleur du titre selon le medium
+        title_color = "green" if "M9F" in group else "red"
+        full_title = f"{group}{title_suffix}" if title_suffix else group
+        ax.set_title(
+            full_title,
+            fontsize=14,
+            fontweight="bold",
+            color=title_color,
+            pad=15,
+        )
+        ax.set_xticks(range(len(expected_repbios)))
+        ax.set_xticklabels(expected_repbios, rotation=0, fontsize=10, fontweight="bold")
+        ax.set_ylabel(y_label, fontsize=12, fontweight="bold")
+
+        # Colorer étiquettes x
+        for tick_label in ax.get_xticklabels():
+            label_text = tick_label.get_text()
+            tick_label.set_color(repbio_colors.get(label_text, "gray"))
+
+    # Légende commune dans l'ordre voulu
+    if handles is not None:
+        fig.legend(
+            handles,
+            labels,
+            title="RepTech_suffix",
+            loc="center left",
+            bbox_to_anchor=(0.95, 0.5),
+            fontsize=12,
+            title_fontsize=14,
+        )
+
+    plt.tight_layout(rect=[0, 0, 0.92, 1])
+    plt.show()
+
+
+def plot_scatter_comparison_m9f_m9(
+    adata,
+    x_column: str = "total_counts",
+    y_column: str = "n_genes_by_counts",
+    color_column: str = "OD",
+    x_label: str = "Total of mRNA UMIs per Cell Barcode",
+    y_label: str = "Total of mRNA genes per Cell Barcode",
+    point_size: int = 20,
+    figsize: tuple = (12, 5),
+    m9f_palette: str = "tab20",
+    m9_palette: str = "Set1",
+    title_suffix: str = "",
+) -> None:
+    """
+    Create scatter plots comparing M9F vs M9 culture mediums.
+
+    Parameters:
+    -----------
+    adata : AnnData
+        AnnData object with obs containing the required columns
+    x_column : str, optional
+        Column name for x-axis (default: "total_counts")
+    y_column : str, optional
+        Column name for y-axis (default: "n_genes_by_counts")
+    color_column : str, optional
+        Column name for coloring points (default: "OD")
+    x_label : str, optional
+        Label for x-axis (default: "Total of mRNA UMIs per Cell Barcode")
+    y_label : str, optional
+        Label for y-axis (default: "Total of mRNA genes per Cell Barcode")
+    point_size : int, optional
+        Size of scatter points (default: 20)
+    figsize : tuple, optional
+        Figure size (default: (12, 5))
+    m9f_palette : str, optional
+        Color palette for M9F medium (default: "tab20")
+    m9_palette : str, optional
+        Color palette for M9 medium (default: "Set1")
+    title_suffix : str, optional
+        Additional suffix for titles (default: "")
+    """
+    import matplotlib.pyplot as plt
+    import scanpy as sc
+
+    # Validate columns exist
+    required_columns = [x_column, y_column, color_column, "CultureMedium"]
+    for col in required_columns:
+        if col not in adata.obs.columns:
+            raise ValueError(f"Column '{col}' not found in adata.obs")
+
+    # Créer les figures
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=figsize)
+
+    # Valeurs min/max globales pour garder les mêmes échelles
+    x_max = adata.obs[x_column].max()
+    y_max = adata.obs[y_column].max()
+
+    # Données M9F
+    m9f_data = adata[adata.obs["CultureMedium"] == "M9F"]
+    if m9f_data.n_obs > 0:
+        sc.pl.scatter(
+            m9f_data,
+            x_column,
+            y_column,
+            color=color_column,
+            ax=ax1,
+            show=False,
+            size=point_size,
+            palette=m9f_palette,
+        )
+        m9f_title = f"M9F medium{title_suffix}" if title_suffix else "M9F medium"
+        ax1.set_title(m9f_title, color="green", fontweight="bold")
+        ax1.set_xlabel(x_label)
+        ax1.set_ylabel(y_label)
+        ax1.set_xlim(0, x_max)
+        ax1.set_ylim(0, y_max)
+    else:
+        ax1.set_title("M9F medium - No data", color="green", fontweight="bold")
+        ax1.set_xlabel(x_label)
+        ax1.set_ylabel(y_label)
+
+    # Données M9
+    m9_data = adata[adata.obs["CultureMedium"] == "M9"]
+    if m9_data.n_obs > 0:
+        sc.pl.scatter(
+            m9_data,
+            x_column,
+            y_column,
+            color=color_column,
+            ax=ax2,
+            show=False,
+            size=point_size,
+            palette=m9_palette,
+        )
+        m9_title = f"M9 medium{title_suffix}" if title_suffix else "M9 medium"
+        ax2.set_title(m9_title, color="red", fontweight="bold")
+        ax2.set_xlabel(x_label)
+        ax2.set_ylabel(y_label)
+        ax2.set_xlim(0, x_max)
+        ax2.set_ylim(0, y_max)
+    else:
+        ax2.set_title("M9 medium - No data", color="red", fontweight="bold")
+        ax2.set_xlabel(x_label)
+        ax2.set_ylabel(y_label)
+
+    plt.tight_layout()
+    plt.show()

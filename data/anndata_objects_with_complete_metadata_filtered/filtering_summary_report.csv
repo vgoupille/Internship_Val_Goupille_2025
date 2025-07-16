@@ -1,0 +1,7 @@
+Step,n_cells,n_genes,cells_removed
+1. Initial dataset (100UMI filtered),132233,6248,0
+2. After removing top 5 outliers,132228,6248,5
+3. After removing group-specific outliers,132223,6248,5
+4. After balanced subsampling (3000 cells),2988,6248,129235
+5. After RepTech-specific outlier removal,2972,6248,16
+6. Final dataset (min 6 cells per RepTech),2913,6248,59
