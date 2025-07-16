@@ -1,0 +1,2 @@
+Module	Section	Sample Name	Source
+FastQC	all_sections	merged_trimmed-R1	/projects/microsplit/data/processed_data/qc_fastq/R1/merged_trimmed-R1_fastqc.zip

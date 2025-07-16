@@ -1,0 +1,13 @@
+Resource Usage Summary for BC_0079
+=======================================
+Start time: jeu. mai 29 14:51:15 CEST 2025
+Input files:
+  R1: data/raw_data/unzipped_data/fastq/BC_0079_R1.fastq.gz (23.51 GB)
+  R2: data/raw_data/unzipped_data/fastq/BC_0079_R2.fastq.gz (10.53 GB)
+SLURM resources:
+  CPUs: 32
+  Memory: 204800
+  Node: cl1n046
+Estimated required memory: 72G
+End time: jeu. mai 29 17:22:16 CEST 2025
+=======================================

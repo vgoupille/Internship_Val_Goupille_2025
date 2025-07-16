@@ -1,1 +1,0 @@
-/projects/microsplit/data/raw_data/barcodes/barcodeSTARsolo/filtered/barcode_rd3_filtered.txt
