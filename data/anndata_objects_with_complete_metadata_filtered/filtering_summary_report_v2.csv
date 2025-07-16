@@ -1,0 +1,7 @@
+Step,n_cells,n_genes,cells_removed
+1. Initial dataset (100UMI filtered),132233,6248,0
+2. Balanced subsampling (4000 cells),3996,6248,128237
+3. RepTech filtering (≥20 cells),3743,6248,253
+4. RepTech outlier removal,3714,6248,29
+5. Balanced subsampling (3000 cells),2988,6248,726
+6. Final dataset,2988,6248,0

@@ -1,0 +1,7 @@
+annotation_column,genes_passing,percentage
+gene_pass_union_OD_5pct,3559,64.7090909090909
+gene_pass_intersection_OD_5pct,477,8.672727272727272
+gene_pass_union_OD_10pct,2302,41.85454545454546
+gene_pass_intersection_OD_10pct,239,4.345454545454546
+gene_pass_union_OD_15pct,1695,30.818181818181817
+gene_pass_intersection_OD_15pct,153,2.7818181818181817

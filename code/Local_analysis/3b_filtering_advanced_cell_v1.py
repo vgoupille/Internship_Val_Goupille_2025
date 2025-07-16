@@ -143,14 +143,7 @@ groups_to_filter = [
 print("🔧 Starting group-specific outlier removal...")
 print(f"📊 Initial dataset: {adata_filtered_100UMI_no_top5_outliers.n_obs:,} cells")
 
-# Show initial violin plot before filtering
-print("\n📊 Initial violin plot before group-specific filtering:")
-sc.pl.violin(
-    adata_filtered_100UMI_no_top5_outliers,
-    ["n_counts"],
-    groupby="Group",
-    multi_panel=True,
-)
+# Plot is already shown above after removing top 5 outliers - no need to repeat
 
 # Start with the dataset that already has top 5 outliers removed
 adata_filtered_100UMI_no_group_outliers = adata_filtered_100UMI_no_top5_outliers.copy()
@@ -353,15 +346,15 @@ print(f"📊 Total by medium: {total_by_medium}")
 
 
 # %%
-# Example usage of the violin+stripplot function
-print("\n📊 Example violin + stripplot visualizations...")
+# Violin + stripplot function
+print("\n📊 Violin + stripplot visualizations...")
 
 # Plot for n_counts (UMIs)
 print("\n1️⃣ Plotting n_counts (UMIs)...")
 plot_violin_stripplot_by_group(
     adata=adata_filtered_100UMI_balanced_3000cells_by_OD,
     y_column="n_counts",
-    y_label="Number of mRNA UMIs per Cell Barcode",
+    y_label="Number of UMIs per Cell Barcode",
     title_suffix=" - UMIs",
     figsize_per_plot=6,
 )
@@ -371,15 +364,15 @@ print("\n2️⃣ Plotting n_genes...")
 plot_violin_stripplot_by_group(
     adata=adata_filtered_100UMI_balanced_3000cells_by_OD,
     y_column="n_genes",
-    y_label="Number of mRNA Genes per Cell Barcode",
+    y_label="Number of Genes per Cell Barcode",
     title_suffix=" - Genes",
     figsize_per_plot=6,
 )
 
 
 # %%
-# Example usage of the scatter comparison function
-print("\n📊 Example scatter comparison M9F vs M9...")
+# Scatter comparison function
+print("\n📊 Scatter comparison M9F vs M9...")
 
 # Scatter plot with n_counts vs n_genes
 print("\n3️⃣ Plotting n_counts vs n_genes comparison...")
@@ -388,9 +381,9 @@ plot_scatter_comparison_m9f_m9(
     x_column="n_counts",
     y_column="n_genes",
     color_column="OD",
-    x_label="Total of mRNA UMIs per Cell Barcode",
-    y_label="Total of mRNA genes per Cell Barcode",
-    title_suffix=" - Comparison",
+    x_label="Total of UMIs per Cell Barcode",
+    y_label="Total of Genes per Cell Barcode",
+    title_suffix="",
     point_size=20,
     figsize=(12, 5),
     m9f_palette="tab20",
@@ -682,4 +675,35 @@ summary_report_path = os.path.join(OUTPUT_PATH, "filtering_summary_report.csv")
 summary_df.to_csv(summary_report_path, index=False)
 print(f"\n📋 Summary report saved to: {summary_report_path}")
 
-print("\n🎉 Advanced cell filtering completed successfully!")
+print("\n🎉 3b Advanced cell filtering completed successfully!")
+
+# %%
+# Save filtered AnnData object (similar to 3a)
+print("\n💾 Saving filtered AnnData object...")
+OUTPUT_PATH_ANNDATA = "data/anndata_objects_with_complete_metadata_filtered"
+OUTPUT_FILE_ANNDATA = (
+    "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3b.h5ad"
+)
+
+# Create output directory if it doesn't exist
+os.makedirs(OUTPUT_PATH_ANNDATA, exist_ok=True)
+
+# Save the final filtered AnnData object
+output_file_anndata = os.path.join(OUTPUT_PATH_ANNDATA, OUTPUT_FILE_ANNDATA)
+adata_filtered_100UMI_balanced_min6cells_per_RepTech.write(output_file_anndata)
+
+print(f"📁 Created directory: {OUTPUT_PATH_ANNDATA}")
+print(f"💾 Saved filtered anndata object to: {output_file_anndata}")
+print(
+    f"📊 Saved {adata_filtered_100UMI_balanced_min6cells_per_RepTech.n_obs:,} cells and {adata_filtered_100UMI_balanced_min6cells_per_RepTech.n_vars:,} genes (3b filtering)"
+)
+
+# %%
+# Final summary
+print("\n🎉 3b analysis completed successfully!")
+print(
+    f"📊 Final dataset: {adata_filtered_100UMI_balanced_min6cells_per_RepTech.n_obs:,} cells × {adata_filtered_100UMI_balanced_min6cells_per_RepTech.n_vars:,} genes"
+)
+print(f"💾 Saved to: {output_file_anndata}")
+
+# %%

@@ -1,0 +1,6 @@
+Step,n_cells,n_genes,genes_removed
+1. Initial dataset (post cell filtering),2988,6248,0
+2. Protein-coding genes only,2988,6099,149
+3. Min cells per gene (≥5 cells),2988,5500,599
+4. Gene annotations added,2988,5500,0
+5. Final dataset,2988,5500,0

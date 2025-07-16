@@ -7,6 +7,7 @@ import pandas as pd
 import scanpy as sc
 import matplotlib.pyplot as plt
 import seaborn as sns
+from datetime import datetime
 
 # Add current directory to path for imports
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -126,7 +127,8 @@ def filter_cells_by_umi(
     Returns:
         ad.AnnData: Filtered AnnData object
     """
-    print(f"📊 Before filtering: {adata.n_obs:,} cells")
+    initial_cells = adata.n_obs
+    print(f"📊 Before filtering: {initial_cells:,} cells")
 
     # Create mask for cells to keep
     cells_to_keep = adata.obs["n_counts"] >= threshold
@@ -134,10 +136,13 @@ def filter_cells_by_umi(
     # Apply filtering
     adata_filtered = adata[cells_to_keep, :].copy()
 
-    print(
-        f"📊 After filtering (n_counts >= {threshold}): {adata_filtered.n_obs:,} cells"
-    )
-    print(f"🗑️ Removed {adata.n_obs - adata_filtered.n_obs:,} cells")
+    final_cells = adata_filtered.n_obs
+    removed_cells = initial_cells - final_cells
+    retention_rate = (final_cells / initial_cells) * 100
+
+    print(f"📊 After filtering (n_counts >= {threshold}): {final_cells:,} cells")
+    print(f"🗑️ Removed {removed_cells:,} cells")
+    print(f"✅ Retention rate: {retention_rate:.1f}%")
 
     return adata_filtered
 
@@ -236,6 +241,17 @@ print(f"\n🔍 Filtering cells with n_counts < {UMI_THRESHOLD}...")
 adata_filtered = filter_cells_by_umi(adata, UMI_THRESHOLD)
 print_filtering_summary(adata_filtered)
 
+# Print prominent summary
+print("\n" + "=" * 60)
+print("📊 UMI FILTERING SUMMARY")
+print("=" * 60)
+print(f"🔢 Initial cells:          {adata.n_obs:,}")
+print(f"🔢 Cells after filtering:  {adata_filtered.n_obs:,}")
+print(f"🗑️ Cells removed:          {adata.n_obs - adata_filtered.n_obs:,}")
+print(f"✅ Retention rate:         {(adata_filtered.n_obs / adata.n_obs) * 100:.1f}%")
+print(f"🎯 Threshold applied:      n_counts >= {UMI_THRESHOLD}")
+print("=" * 60)
+
 # %%
 # Create comparison plot
 print("\n📊 Creating comparison plot...")
@@ -251,11 +267,41 @@ run_visualizations(adata_filtered)
 # Save results
 print("\n💾 Saving results...")
 os.makedirs(OUTPUT_PATH, exist_ok=True)
+
+# Save anndata object
 output_file = os.path.join(OUTPUT_PATH, OUTPUT_FILE)
 adata_filtered.write(output_file)
 
+# Save filtering statistics as CSV
+# This CSV contains: initial_cells, cells_after_filtering, cells_removed, retention_rate_percent, threshold_applied, timestamp
+stats_file = os.path.join(
+    OUTPUT_PATH, OUTPUT_FILE.replace(".h5ad", "_filtering_stats.csv")
+)
+filtering_stats = pd.DataFrame(
+    {
+        "metric": [
+            "initial_cells",
+            "cells_after_filtering",
+            "cells_removed",
+            "retention_rate_percent",
+            "threshold_applied",
+            "timestamp",
+        ],
+        "value": [
+            adata.n_obs,
+            adata_filtered.n_obs,
+            adata.n_obs - adata_filtered.n_obs,
+            (adata_filtered.n_obs / adata.n_obs) * 100,
+            UMI_THRESHOLD,
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        ],
+    }
+)
+filtering_stats.to_csv(stats_file, index=False)
+
 print(f"📁 Created directory: {OUTPUT_PATH}")
 print(f"💾 Saved filtered anndata object to: {output_file}")
+print(f"💾 Saved filtering statistics CSV to: {stats_file}")
 print(
     f"📊 Saved {adata_filtered.n_obs:,} cells and {adata_filtered.n_vars:,} genes (filtered at {UMI_THRESHOLD} UMI)"
 )
@@ -263,9 +309,19 @@ print(
 # %%
 # Final summary
 print("\n🎉 Analysis completed successfully!")
+print("\n" + "=" * 60)
+print("📊 FINAL SUMMARY")
+print("=" * 60)
 print(
     f"📊 Final dataset: {adata_filtered.n_obs:,} cells × {adata_filtered.n_vars:,} genes"
 )
-print(f"💾 Saved to: {output_file}")
+print(f"🔢 Initial cells:          {adata.n_obs:,}")
+print(f"🔢 Cells after filtering:  {adata_filtered.n_obs:,}")
+print(f"🗑️ Cells removed:          {adata.n_obs - adata_filtered.n_obs:,}")
+print(f"✅ Retention rate:         {(adata_filtered.n_obs / adata.n_obs) * 100:.1f}%")
+print(f"🎯 Threshold applied:      n_counts >= {UMI_THRESHOLD}")
+print("=" * 60)
+print(f"💾 AnnData object saved to: {output_file}")
+print(f"💾 Filtering statistics CSV saved to: {stats_file}")
 
 # %%
