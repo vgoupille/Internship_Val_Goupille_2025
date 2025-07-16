@@ -219,7 +219,7 @@ def add_gene_metadata_to_anndata(adata, ncbi_df):
 
     # Add metadata about the enrichment
     adata.uns["gene_metadata_added"] = True
-    adata.uns["gene_metadata_source"] = "annotation_2024.tsv"
+    adata.uns["gene_metadata_source"] = "ncbi_dataset_with_id.tsv"
     adata.uns["genes_with_metadata"] = len(ncbi_filtered)
     adata.uns["total_genes"] = len(gene_names)
 
@@ -233,7 +233,7 @@ def process_anndata_objects(
     anndata_dir: str = "data/anndata_objects",
     barqc_dir: str = "data/barcodes_result/barqc",
     metadata_file: str = "data/barcodes_result/metadata_DOL_Exp1_complete.xlsx",
-    ncbi_file: str = "data/raw_data/genome_annotation/annotation_2024.tsv",
+    ncbi_file: str = "data/ncbi/ncbi_dataset_with_id.tsv",
     output_dir: str = "data/anndata_objects_with_complete_metadata",
 ):
     """
@@ -342,7 +342,7 @@ def main():
     anndata_dir = "data/anndata_objects"
     barqc_dir = "data/barcodes_result/barqc"
     metadata_file = "data/barcodes_result/metadata_DOL_Exp1_complete.xlsx"
-    ncbi_file = "data/raw_data/genome_annotation/annotation_2024.tsv"
+    ncbi_file = "data/ncbi/ncbi_dataset_with_id.tsv"
     output_dir = "data/anndata_objects_with_complete_metadata"
 
     process_anndata_objects(
