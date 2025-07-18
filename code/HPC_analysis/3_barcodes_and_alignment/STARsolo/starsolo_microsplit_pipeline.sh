@@ -69,94 +69,117 @@ else
     exit 1
 fi
 
-# Step 1: Create STARsolo environment (if not already created)
-echo "$(date) - Step 1: Creating STARsolo environment (if needed)..."
+# Step 1: Activate STARsolo environment (should be created beforehand with create_env_STARsolo.sh)
+echo "$(date) - Step 1: Activating STARsolo environment..."
 
-# First check if the parent directory of the conda environment exists
-CONDA_PARENT_DIR=$(dirname "$CONDA_ENV_PATH")
-if [ ! -d "$CONDA_PARENT_DIR" ]; then
-    echo "Creating parent directory for conda environment: $CONDA_PARENT_DIR"
-    mkdir -p "$CONDA_PARENT_DIR" || { echo "ERROR: Failed to create conda environment parent directory"; exit 1; }
+# Check if the environment exists
+if ! conda env list | grep -q "${CONDA_ENV_PATH##*/}"; then
+    echo "ERROR: STARsolo environment does not exist at $CONDA_ENV_PATH"
+    echo "Please run create_env_STARsolo.sh first to create the environment"
+    echo "Command: sbatch create_env_STARsolo.sh"
+    exit 1
 fi
 
-# Check if the environment already exists
-if conda env list | grep -q "${CONDA_ENV_PATH##*/}"; then
-    echo "STARsolo environment already exists. Trying to activate..."
-    if ! conda activate "$CONDA_ENV_PATH"; then
-        echo "ERROR: Cannot activate existing conda environment. It may be corrupted."
-        echo "Removing and recreating the environment..."
-        conda env remove -p "$CONDA_ENV_PATH" || echo "Warning: Failed to remove existing environment"
-        CREATE_NEW_ENV=1
-    else
-        echo "Successfully activated existing environment."
-        CREATE_NEW_ENV=0
-    fi
-else
-    echo "STARsolo environment does not exist. Will create new environment."
-    CREATE_NEW_ENV=1
-fi
-
-# Create a new environment if needed
-if [ $CREATE_NEW_ENV -eq 1 ]; then
-    echo "Creating STARsolo environment at: $CONDA_ENV_PATH"
-    conda create -p "$CONDA_ENV_PATH" python=3.6 -y || { echo "ERROR: Failed to create conda environment"; exit 1; }
-    
-    echo "Installing required packages..."
-    conda activate "$CONDA_ENV_PATH" || { echo "ERROR: Failed to activate the new conda environment"; exit 1; }
-    conda install -c bioconda star=2.7.9 cufflinks=2.2.1 gffread=0.12.1 -y || { echo "ERROR: Failed to install required packages"; exit 1; }
-    conda install -c conda-forge yq -y || { echo "ERROR: Failed to install yq"; exit 1; }
-    
-    # Check installed tool versions
-    echo "Checking installed tools versions:"
-    STAR --version || { echo "ERROR: STAR not properly installed"; exit 1; }
-    
-    # Cufflinks doesn't support --version, just check if it's executable
-    echo "Checking Cufflinks installation:"
-    if ! command -v cufflinks &> /dev/null; then
-        echo "ERROR: Cufflinks not found"
-        exit 1
-    else
-        echo "Cufflinks is installed"
-        # Display the first line of help output to confirm it works
-        cufflinks 2>&1 | head -n 1
-    fi
-    
-    # Check if gffread is available
-    echo "Checking gffread installation:"
-    if ! command -v gffread &> /dev/null; then
-        echo "ERROR: gffread not found"
-        exit 1
-    else
-        echo "gffread is installed"
-    fi
-fi
-
-# Always activate the environment before continuing
+# Activate the environment
 echo "Activating conda environment..."
-conda activate "$CONDA_ENV_PATH" || { echo "ERROR: Failed to activate conda environment at $CONDA_ENV_PATH"; exit 1; }
+conda activate "$CONDA_ENV_PATH" || { 
+    echo "ERROR: Failed to activate conda environment at $CONDA_ENV_PATH"
+    echo "The environment may be corrupted. Please recreate it with create_env_STARsolo.sh"
+    exit 1
+}
 
-# Check that required commands are available
+# Verify that required tools are available
 echo "Verifying required tools availability..."
+MISSING_TOOLS=0
 
-# First check STAR and gffread which accept version options
-for cmd in STAR gffread; do
+# Check each required tool
+for cmd in STAR gffread cufflinks; do
     if ! command -v $cmd &> /dev/null; then
         echo "ERROR: $cmd command not found in the activated environment"
-        echo "Please check your conda environment installation"
-        exit 1
+        MISSING_TOOLS=$((MISSING_TOOLS+1))
+    else
+        echo "✓ $cmd is available"
     fi
 done
 
-# Special check for cufflinks
-if ! command -v cufflinks &> /dev/null; then
-    echo "ERROR: cufflinks command not found in the activated environment"
-    echo "Please check your conda environment installation"
+if [ $MISSING_TOOLS -gt 0 ]; then
+    echo "ERROR: $MISSING_TOOLS required tools are missing from the environment"
+    echo "Please recreate the environment with create_env_STARsolo.sh"
     exit 1
-else
-    echo "Cufflinks is available"
 fi
 
 echo "Conda environment setup completed successfully."
+
+# Step 1.5: Validate input files
+echo "$(date) - Step 1.5: Validating input files..."
+
+# Check FASTQ files
+echo "Checking FASTQ files..."
+for file_var in SOURCE_FASTQ_R1 SOURCE_FASTQ_R2; do
+    file_path="${SOURCE_FASTQ}/${!file_var}"
+    if [ ! -f "$file_path" ]; then
+        echo "ERROR: FASTQ file not found: $file_path"
+        echo "Please check the SOURCE_FASTQ and $file_var variables in config.sh"
+        exit 1
+    else
+        echo "✓ Found: $file_path"
+        # Check if file is readable and not empty
+        if [ ! -r "$file_path" ] || [ ! -s "$file_path" ]; then
+            echo "ERROR: FASTQ file is not readable or empty: $file_path"
+            exit 1
+        fi
+    fi
+done
+
+# Check barcode files
+echo "Checking barcode files..."
+for file_var in SOURCE_BARCODE_R1 SOURCE_BARCODE_R2 SOURCE_BARCODE_R3; do
+    file_path="${SOURCE_BARCODES}/${!file_var}"
+    if [ ! -f "$file_path" ]; then
+        echo "ERROR: Barcode file not found: $file_path"
+        echo "Please check the SOURCE_BARCODES and $file_var variables in config.sh"
+        exit 1
+    else
+        echo "✓ Found: $file_path"
+        # Check if file is readable and not empty
+        if [ ! -r "$file_path" ] || [ ! -s "$file_path" ]; then
+            echo "ERROR: Barcode file is not readable or empty: $file_path"
+            exit 1
+        fi
+    fi
+done
+
+# Check genome reference file
+echo "Checking genome reference file..."
+genome_ref_path="${SOURCE_GENOME_REF}/${SOURCE_GENOME_FASTA}"
+if [ ! -f "$genome_ref_path" ]; then
+    echo "ERROR: Genome reference file not found: $genome_ref_path"
+    echo "Please check the SOURCE_GENOME_REF and SOURCE_GENOME_FASTA variables in config.sh"
+    exit 1
+else
+    echo "✓ Found: $genome_ref_path"
+    if [ ! -r "$genome_ref_path" ] || [ ! -s "$genome_ref_path" ]; then
+        echo "ERROR: Genome reference file is not readable or empty: $genome_ref_path"
+        exit 1
+    fi
+fi
+
+# Check genome annotation file
+echo "Checking genome annotation file..."
+genome_annotation_path="${SOURCE_GENOME_ANNOTATION}/${SOURCE_GENOME_GFF}"
+if [ ! -f "$genome_annotation_path" ]; then
+    echo "ERROR: Genome annotation file not found: $genome_annotation_path"
+    echo "Please check the SOURCE_GENOME_ANNOTATION and SOURCE_GENOME_GFF variables in config.sh"
+    exit 1
+else
+    echo "✓ Found: $genome_annotation_path"
+    if [ ! -r "$genome_annotation_path" ] || [ ! -s "$genome_annotation_path" ]; then
+        echo "ERROR: Genome annotation file is not readable or empty: $genome_annotation_path"
+        exit 1
+    fi
+fi
+
+echo "All input files validated successfully."
 
 # Step 2: Create directory structure and symbolic links
 echo "$(date) - Step 2: Setting up directory structure and links..."

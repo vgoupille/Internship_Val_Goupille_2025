@@ -21,7 +21,7 @@ BASE_PATH="/projects/microsplit"  # Base path for the project
 # You can check it using: [ -d "$BASE_PATH" ] && echo "Path exists" || echo "Path DOES NOT exist"
 # If it doesn't exist, the pipeline will fail when trying to create the conda environment
 
-# Analysis Name and Base Directory
+# Analysis Name and Base Directory (Templates - will be replaced by actual sample name)
 ANALYSIS_NAME="STARsolo_microSPLIT_SAMPLE" # Template name, will be replaced by actual sample name
 BASE_DIR="Analysis_STARsolo_microSPLIT_SAMPLE" # Template directory, will be replaced by actual sample name
 
@@ -53,7 +53,7 @@ TARGET_BARCODE_R2="barcode_round2.txt"  # Nom cible pour STARsolo round 2
 TARGET_BARCODE_R3="barcode_round3.txt"  # Nom cible pour STARsolo round 3
 
 SOURCE_GENOME_REF="${BASE_PATH}/data/raw_data/genome_ref"
-SOURCE_GENOME_ANNOTATION="${BASE_PATH}/raw_data/genome_annotation"
+SOURCE_GENOME_ANNOTATION="${BASE_PATH}/data/raw_data/genome_annotation"
 
 
 
@@ -61,20 +61,15 @@ SOURCE_GENOME_ANNOTATION="${BASE_PATH}/raw_data/genome_annotation"
 
 #---------------------------------------------------------------------------
 
-# Source File Names - Update these to match your actual source files
+# === TEMPLATE FILES (will be replaced by run_all_samples.sh) ===
 SOURCE_FASTQ_R1="SAMPLE_R1.fastq.gz" # Template name, will be replaced by actual file name
 SOURCE_FASTQ_R2="SAMPLE_R2.fastq.gz" # Template name, will be replaced by actual file name
 
-
-
-
-
-
-
+# === ACTUAL FILES (fixed names) ===
 SOURCE_GENOME_FASTA="GCA_030064105.1_ASM3006410v1_genomic.fna"
 SOURCE_GENOME_GFF="GCA_030064105.1_ASM3006410v1_genomic.gff"
 
-# Target (Symbolic Link) File Names
+# === TARGET FILES (symbolic link names) ===
 TARGET_FASTQ_R1="SAMPLE_R1.fastq.gz" # Template name, will be replaced by actual file name
 TARGET_FASTQ_R2="SAMPLE_R2.fastq.gz" # Template name, will be replaced by actual file name
 TARGET_GENOME_FASTA="genome_ref_PsR401.fna"

@@ -59,6 +59,39 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate YAML file before processing
+echo "Validating YAML file: ${SAMPLES_YAML}"
+
+# Check if YAML file exists
+if [ ! -f "${SAMPLES_YAML}" ]; then
+    echo "ERROR: YAML file not found: ${SAMPLES_YAML}"
+    echo "Please check the SAMPLES_YAML variable or create the file"
+    exit 1
+fi
+
+# Check if YAML file is readable
+if [ ! -r "${SAMPLES_YAML}" ]; then
+    echo "ERROR: YAML file is not readable: ${SAMPLES_YAML}"
+    echo "Please check file permissions"
+    exit 1
+fi
+
+# Check if YAML file is valid
+if ! yq -e '.' "${SAMPLES_YAML}" > /dev/null 2>&1; then
+    echo "ERROR: YAML file is not valid or malformed: ${SAMPLES_YAML}"
+    echo "Please check the YAML syntax"
+    exit 1
+fi
+
+# Check if samples section exists
+if ! yq -e '.samples' "${SAMPLES_YAML}" > /dev/null 2>&1; then
+    echo "ERROR: No 'samples' section found in YAML file: ${SAMPLES_YAML}"
+    echo "Please check the YAML structure"
+    exit 1
+fi
+
+echo "YAML file validation completed."
+
 # Get sample names from the YAML file
 if [ -n "$TARGET_SAMPLE" ]; then
     # Check if the specified sample exists and has the required input type
@@ -66,24 +99,45 @@ if [ -n "$TARGET_SAMPLE" ]; then
         SAMPLES=("$TARGET_SAMPLE")
         echo "Processing single sample: ${TARGET_SAMPLE}"
         echo "Using input files:"
-        echo "R1: $(yq -r ".samples.${TARGET_SAMPLE}.R1.${INPUT_TYPE}" "${SAMPLES_YAML}")"
-        echo "R2: $(yq -r ".samples.${TARGET_SAMPLE}.R2.${INPUT_TYPE}" "${SAMPLES_YAML}")"
+        R1_FILE=$(yq -r ".samples.${TARGET_SAMPLE}.R1.${INPUT_TYPE}" "${SAMPLES_YAML}")
+        R2_FILE=$(yq -r ".samples.${TARGET_SAMPLE}.R2.${INPUT_TYPE}" "${SAMPLES_YAML}")
+        echo "R1: $R1_FILE"
+        echo "R2: $R2_FILE"
+        
+        # Validate that the files exist
+        if [ ! -f "$R1_FILE" ]; then
+            echo "ERROR: R1 file not found: $R1_FILE"
+            exit 1
+        fi
+        if [ ! -f "$R2_FILE" ]; then
+            echo "ERROR: R2 file not found: $R2_FILE"
+            exit 1
+        fi
     else
-        echo "Error: Sample ${TARGET_SAMPLE} not found or does not have input type ${INPUT_TYPE}"
+        echo "ERROR: Sample ${TARGET_SAMPLE} not found or does not have input type ${INPUT_TYPE}"
         echo "Available samples and types:"
-        yq -r '.samples | to_entries | .[] | .key + ": " + (.value.R1 | keys | join(", "))' "${SAMPLES_YAML}"
+        if yq -e '.samples' "${SAMPLES_YAML}" > /dev/null 2>&1; then
+            yq -r '.samples | to_entries | .[] | .key + ": " + (.value.R1 | keys | join(", "))' "${SAMPLES_YAML}" 2>/dev/null || echo "Unable to parse sample information"
+        else
+            echo "Unable to parse sample information from YAML file"
+        fi
         exit 1
     fi
 else
     # Get all samples that have the specified input type
     echo "Reading samples from ${SAMPLES_YAML} for input type: ${INPUT_TYPE}..."
-    SAMPLES=($(yq -r ".samples | to_entries | .[] | select(.value.R1.${INPUT_TYPE} != null) | .key" "${SAMPLES_YAML}"))
+    SAMPLES=($(yq -r ".samples | to_entries | .[] | select(.value.R1.${INPUT_TYPE} != null) | .key" "${SAMPLES_YAML}" 2>/dev/null))
+    
+    # Check if any samples were found
+    if [ ${#SAMPLES[@]} -eq 0 ]; then
+        echo "ERROR: No samples found with input type '${INPUT_TYPE}'"
+        echo "Available input types:"
+        yq -r '.samples | to_entries | .[0].value.R1 | keys | join(", ")' "${SAMPLES_YAML}" 2>/dev/null || echo "Unable to parse available types"
+        exit 1
+    fi
 fi
 
-if [ ${#SAMPLES[@]} -eq 0 ]; then
-    echo "Error: No samples found in ${SAMPLES_YAML} with input type '${INPUT_TYPE}'"
-    exit 1
-fi
+
 
 echo "Found ${#SAMPLES[@]} samples to process"
 echo "Options:"
