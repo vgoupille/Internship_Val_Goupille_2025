@@ -1,2 +1,0 @@
-Sample	Top overrepresented sequence	Sum of remaining overrepresented sequences
-merged_trimmed-R1	1.6544401819726853	12.057410434348041

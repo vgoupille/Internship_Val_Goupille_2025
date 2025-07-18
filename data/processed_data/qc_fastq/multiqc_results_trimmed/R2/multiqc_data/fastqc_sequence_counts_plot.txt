@@ -1,2 +1,0 @@
-Sample	Unique Reads	Duplicate Reads
-merged_trimmed-R2	75848880.0	1208626753.0
