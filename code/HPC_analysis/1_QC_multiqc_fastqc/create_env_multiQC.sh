@@ -13,7 +13,7 @@
 
 
 ENV_PATH="env/envMultiQC"
-YAML_FILE="scripts/1_QC_fastq/environment_multiQC.yml"
+YAML_FILE="code/HPC_analysis/1_QC_multiqc_fastqc/environment_multiQC.yml"
 
 # Check if environment exists
 if [ -d "$ENV_PATH" ]; then

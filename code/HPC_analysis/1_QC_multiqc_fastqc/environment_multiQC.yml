@@ -8,5 +8,5 @@ dependencies:
   - multiqc=1.28
   - python=3.9
   - tqdm 
-  - yaml
+  - pyyaml
   - yq
