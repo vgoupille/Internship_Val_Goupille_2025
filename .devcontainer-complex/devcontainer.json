@@ -1,0 +1,81 @@
+{
+  "name": "R_Docker_DOL",
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu-22.04",
+  "features": {
+    "ghcr.io/rocker-org/devcontainer-features/quarto-cli:1": {},
+    "ghcr.io/rocker-org/devcontainer-features/r-rig:latest": {
+      "version": "4.5.0",
+      //"vscodeRSupport": "minimal", // "full" but for the moment, it's not working because httpgd is not avaible in R 4.5.0 , and also languageserver is not avaible working, we direcly install it in the R-packages feature
+      "installDevTools": true,
+      "installREnv": true,
+      "installRMarkdown": true,
+      "installRadian": true,
+      "installVscDebugger": true,
+      "installJupyterlab": true,
+      "pandocVersion": "3.6.4"
+    },
+    "ghcr.io/rocker-org/devcontainer-features/r-packages:1": {
+      "packages": "languageserver@0.3.16, github::nx10/httpgd, reticulate@1.42.0, tidyverse@2.0.0, Seurat@5.3.0, anndata@0.8.0, scCustomize@3.0.1, vegan@2.7-1, harmony@1.2.3, patchwork, circlize, paletteer, ggrepel, ggthemes, ggh4x, hrbrthemes, shiny@1.7.4, plotly@4.10.2, BiocManager, glmGamPoi, limma, edgeR, DESeq2, monocle, ReactomePA, clusterProfiler, goseq, ComplexHeatmap, EnhancedVolcano, AnnotationDbi",
+      "installSystemRequirements": true,
+      "cranMirror": "https://packagemanager.posit.co/cran/2025-04-22"
+    },
+    "ghcr.io/rocker-org/devcontainer-features/miniforge:2.0.1": {}
+  },
+  "overrideFeatureInstallOrder": [
+    "ghcr.io/rocker-org/devcontainer-features/quarto-cli:1",
+    "ghcr.io/rocker-org/devcontainer-features/r-rig:latest",
+    "ghcr.io/rocker-org/devcontainer-features/r-packages:1",
+    "ghcr.io/rocker-org/devcontainer-features/miniforge:1"
+  ],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "r.alwaysUseActiveTerminal": true,
+        "r.bracketedPaste": true,
+        "r.sessionWatcher": true,
+        "r.plot.useHttpgd": true,
+        "r.lsp.diagnostics": false,
+        "workbench.editor.showTabs": "multiple",
+        "r.rterm.option": [
+          "--no-save",
+          "--no-restore",
+          "--r-binary=/usr/local/bin/R"
+        ]
+      },
+      "extensions": [
+        "donjayamanne.python-extension-pack",
+        "ms-toolsai.jupyter",
+        "REditorSupport.r",
+        "Posit.shiny",
+        "ms-python.vscode-pylance",
+        "ms-python.black-formatter",
+        "ms-python.debugpy",
+        "naumovs.color-highlight",
+        "ms-toolsai.datawrangler",
+        "ms-vscode-remote.remote-containers",
+        "ShahilKumar.docxreader",
+        "bceskavich.theme-dracula-at-night",
+        "dracula-theme.theme-dracula",
+        "GitHub.vscode-pull-request-github",
+        "mhutchie.git-graph",
+        "github.vscode-github-actions",
+        "ecmel.vscode-html-css",
+        "oderwat.indent-rainbow",
+        "ms-vsliveshare.vsliveshare",
+        "yzhang.markdown-all-in-one",
+        "esbenp.prettier-vscode",
+        "mechatroner.rainbow-csv",
+        "redhat.vscode-yaml",
+        "purocean.drawio-preview",
+        "RDebugger.r-debugger",
+        "quarto.quarto",
+        "ms-azuretools.vscode-docker"
+        //"nextflow.nextflow",
+      ]
+    }
+  },
+  "remoteUser": "vscode",
+  "postCreateCommand": "conda init bash && conda env create -f .devcontainer/environment.yml && conda run -n bioinfo_env python -m ipykernel install --user --name=bioinfo_env --display-name='Python (bioinfo_env)' && conda env create -f .devcontainer/env_reticulate.yml && conda run -n env_reticulate python -m ipykernel install --user --name=env_reticulate --display-name='Python (env_reticulate)' && cp .devcontainer/.Rprofile /home/vscode/.Rprofile && echo 'Container started successfully!'",
+  "postStartCommand": "until [ -f /home/vscode/.vscode-R/init.R ]; do sleep 0.1; done; radian"
+}
+// && sudo cp .devcontainer/.Rprofile.site
