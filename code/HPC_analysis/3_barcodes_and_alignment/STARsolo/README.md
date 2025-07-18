@@ -47,6 +47,8 @@ Edit the `config.sh` file to define:
 sbatch create_env_STARsolo.sh
 ```
 
+⚠️ **Important**: The environment must be created before running the pipeline. The main pipeline script now expects the environment to exist and will fail gracefully if it doesn't.
+
 ### 3. Single Sample Execution
 
 ```bash
@@ -84,6 +86,27 @@ The pipeline uses the following parameters for microSPLIT:
 --soloFeatures Gene GeneFull                     # Gene and exon quantification
 ```
 
+## Pipeline Features
+
+### 🔍 Automatic Input Validation
+
+The pipeline now includes comprehensive validation checks that occur before processing begins:
+
+- **FASTQ files**: Verifies existence, readability, and non-empty status
+- **Barcode files**: Validates all three barcode rounds (R1, R2, R3)
+- **Genome files**: Checks reference genome and annotation files
+- **YAML configuration**: Validates syntax and structure
+- **Environment**: Ensures conda environment exists and tools are available
+
+If any validation fails, the pipeline stops with informative error messages and suggestions for fixing the issues.
+
+### 🛠️ Improved Error Handling
+
+- **Graceful failures**: Pipeline stops cleanly when problems are detected
+- **Informative messages**: Clear error descriptions with path information
+- **Troubleshooting hints**: Suggestions for resolving common issues
+- **File existence checks**: Validation before creating symbolic links
+
 ## Data Structure
 
 ### Expected Input
@@ -118,20 +141,20 @@ output_directory/
 4. **Multi-sample Support**: Batch processing capability
 5. **Isolated Environment**: Clean conda management
 
-### ⚠️ Identified Improvements
+### ⚠️ Previously Identified Issues (Now Fixed)
 
-1. **Hardcoded Paths**: Some paths reference obsolete structures
-2. **Redundancy**: Environment creation in main script AND dedicated script
-3. **Template Configuration**: Mix of templates and real values in config.sh
-4. **Error Handling**: Could be more robust for missing files
+1. **~~Hardcoded Paths~~**: ✅ Fixed obsolete path references
+2. **~~Redundancy~~**: ✅ Removed redundant environment creation 
+3. **~~Template Configuration~~**: ✅ Separated templates from real values
+4. **~~Error Handling~~**: ✅ Added robust validation and informative messages
 
-### 🔧 Suggested Improvements
+### 🔧 Recent Improvements Implemented
 
-1. **Clean Paths** in config.sh (lines 43-44)
-2. **Separate Logic** for environment creation
-3. **Improve Validation** of input files
-4. **Add Detailed Logs**
-5. **Document** STARsolo-specific parameters
+1. **✅ Clean Paths**: Fixed `SOURCE_GENOME_ANNOTATION` path in config.sh
+2. **✅ Separate Logic**: Removed environment creation from main pipeline
+3. **✅ Robust Validation**: Added comprehensive input file validation
+4. **✅ Better Error Messages**: Informative errors with troubleshooting hints
+5. **✅ Configuration Clarity**: Clear separation of templates and actual values
 
 ## Recommended Resources
 
@@ -172,19 +195,31 @@ ls -la /projects/microsplit/data/raw_data/barcodes/barcodeSTARsolo/filtered/
 
 ## Testing Improvements
 
-After the improvements, you can test the pipeline:
+After the improvements, you can test the pipeline and its new validation features:
 
 ```bash
 # 1. Verify configuration
 source config.sh
 echo "Configuration loaded for: $ANALYSIS_NAME"
 
-# 2. Test YAML validation
+# 2. Test YAML validation (will validate file structure)
 ./run_all_samples.sh --sample BC_0076 --type merged_trimmed
 
-# 3. Test input file validation
-# The pipeline will stop cleanly if files are missing
+# 3. Test input file validation (runs automatically in pipeline)
+# The pipeline will now validate all input files before processing
+# and stop gracefully with helpful error messages if files are missing
+
+# 4. Test with intentionally wrong paths to see error handling
+# Edit config.sh temporarily with wrong paths to test validation
 ```
+
+### 🧪 New Validation Features You Can Test
+
+- **YAML Structure Validation**: Try with malformed YAML files
+- **File Existence Checks**: Test with missing FASTQ or barcode files  
+- **Environment Validation**: Test without creating conda environment first
+- **Path Validation**: Test with incorrect file paths in config.sh
+- **Permissions Checks**: Test with unreadable files
 
 ### Applied Improvements ✨
 
