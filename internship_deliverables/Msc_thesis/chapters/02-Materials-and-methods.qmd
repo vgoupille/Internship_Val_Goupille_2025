@@ -66,7 +66,7 @@ Two distinct culture conditions were applied to the bacteria:a stringent medium 
 
 
 
-![Bacterial growth dynamics of *P. brassicacearum* R401 populations measured by optical density (OD600) cultured under two different nutrient conditions: M9 (low glucose/iron) and M9F (high glucose/iron).](../figures/growth_curves_all.png){#fig-growth-curves fig-cap="Bacterial growth dynamics of *P. brassicacearum* R401 populations measured by optical density (OD600) cultured under two different nutrient conditions: M9 (low glucose/iron) and M9F (high glucose/iron)." width="70%"}
+![Bacterial growth dynamics of *P. brassicacearum* R401 populations measured by optical density (OD600) cultured under two different nutrient conditions: M9 (low glucose/iron) and M9F (high glucose/iron).](../../../image/figures_Msc_thesis/growth_curves_all.png){#fig-growth-curves fig-cap="Bacterial growth dynamics of *P. brassicacearum* R401 populations measured by optical density (OD600) cultured under two different nutrient conditions: M9 (low glucose/iron) and M9F (high glucose/iron)." width="70%"}
 
 *Measurements were taken at three timepoints (T1, T2, T3) for three biological replicates (Rep A, B, C) for both culture media (M9 and M9F). T1 timepoints are identical for both conditions, while T2 and T3 timepoints differ between M9 and M9F culture conditions.*
 
@@ -83,7 +83,7 @@ The microSPLiT strategy will not be described in detail here; for more informati
 
 \newpage
 
-![MicroSPLiT in-cell cDNA barcoding scheme (from Gaisser et al. 2024) @gaisser2024](../figures/protocol.png){#fig-protocol width="70%"}
+![MicroSPLiT in-cell cDNA barcoding scheme (from Gaisser et al. 2024) @gaisser2024](../../../image/figures_Msc_thesis/protocol.png){#fig-protocol width="70%"}
 
 *a, Bacterial cells are fixed overnight and permeabilized before the mRNA is preferentially polyadenylated. After mRNA enrichment, cells may contain both polyadenylated and non-polyadenylated mRNA. b, Cells are distributed into the first barcoding plate, and the mRNA is reverse transcribed by using a mixture of poly-dT and random hexamer primers carrying a barcode (barcode 1, BC1) and a 5' phosphate for future ligation at their 5' end. After the barcoding reaction, cells are pooled together and split again into the second barcoded plate. c, Ligation adds a 5' phosphorylated barcode 2 (BC2) to BC1 with a linker strand. A blocking solution is then added to each of the wells of the second plate, preventing any unreacted BC2 from future ligation. Cells are pooled and split into the third and final barcoded plate. d, A second ligation step adds barcode 3 (BC3) with another linker strand. BC3 also contains a 5' biotin, a primer binding site and a unique molecular identifier (UMI). A blocking solution for the R3 linker is added to each of the wells in the plate before the final pooling of cells. This results in uniquely barcoded cells that can be distributed in aliquots into sub-libraries and stored until future use or used immediately for library preparation. (R1, round 1; R2, round 2; R3, round 3) @gaisser2024.*
 
@@ -140,7 +140,7 @@ Sequencing was performed on a NovaSeq^TM^ X plus instrument at GenoA platform in
 
 ## Pipeline for microSPLiT data processing
 
-![Comprehensive pipeline for microSPLiT single-cell RNA-seq data processing.](../figures/pipeline.png){#fig-pipeline fig-cap="Comprehensive pipeline for microSPLiT single-cell RNA-seq data processing."}
+![Comprehensive pipeline for microSPLiT single-cell RNA-seq data processing.](../../../image/figures_Msc_thesis/pipeline.png){#fig-pipeline fig-cap="Comprehensive pipeline for microSPLiT single-cell RNA-seq data processing."}
 
 *The workflow encompasses the complete analytical process from raw sequencing data to biological interpretation, including quality control and preprocessing of FASTQ files, alignment and quantification using STARsolo, data structuring with metadata assignment, quality filtering and integration, single-cell and pseudobulk analysis approaches, population characterization through clustering and trajectory inference, and downstream expression analysis including differential expression, co-expression networks, and gene ontology enrichment.*
 

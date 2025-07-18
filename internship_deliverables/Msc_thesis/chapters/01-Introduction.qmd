@@ -20,7 +20,7 @@ A major unsolved question is whether populations of genetically identical bacter
 
 Finally, environmental regulation also shapes this process: microenvironmental cues and spatial heterogeneity can induce context-dependent gene expression patterns [@lópez-pagán2025; @korshoj2024], which, if consistently beneficial, may become genetically encoded over evolutionary time. Altogether, these mechanisms point toward an intra-population division of labour emerging from the interplay between gene expression noise, environmental signals, and evolutionary selection.
 
-![Examples of benefits and sources of intraspecific division of labour between intra-populations based on metabolic complementation and costly "common good" metabolite production.](../figures/intraspecific_DoL.png){#fig-intraspecific-DoL width="90%" fig-align="center"}
+![Examples of benefits and sources of intraspecific division of labour between intra-populations based on metabolic complementation and costly "common good" metabolite production.](../../../image/figures_Msc_thesis/intraspecific_dol.png){#fig-intraspecific-DoL width="90%" fig-align="center"}
 
 *From the left to the right, co-metabolism within an isogenic bacterial population (A) and production of antimicrobials targeting other bacteria (B) can be considered as division of labour in a population. These mechanisms of division of labour can be based on differential transcription between bacteria (C) within a population and/or genetic variations between intra-populations (D).*
 
@@ -55,7 +55,7 @@ To address our biological hypothesis regarding intraspecific DoL in *PsR401*, we
 
 \
 
-![Hypothesis of DoL in *PsR401* under iron-limiting conditions](../figures/DoL_hypothesis.png){#fig-hypothesis-iron width="60%" fig-align="center"}
+![Hypothesis of DoL in *PsR401* under iron-limiting conditions](../../../image/figures_Msc_thesis/DOL_hypothesis.png){#fig-hypothesis-iron width="60%" fig-align="center"}
 
 *Testing the division of labor hypothesis in PsR401 under two contrasting conditions: iron-limited and iron-replete environments. Single-cell RNA sequencing (scRNA-seq) with microSPLiT will enable detection of transcriptional heterogeneity within the population, revealing whether this specialization is driven by noisy gene expression or environmentally induced metabolic specialization.*
 

@@ -236,11 +236,11 @@ The first step involved filtering cells based on unique molecular identifier (UM
 
 ::: {#fig-filter_100UMI layout="[[1,1], [1]] "}
 
-![Proportion of cell barcodes before and after filtering at 100 UMIs threshold for M9 and M9F culture conditions](../figures/filter_100UMIs_barplot.png){#fig-barplot width="90%"}
+![Proportion of cell barcodes before and after filtering at 100 UMIs threshold for M9 and M9F culture conditions](../../../image/figures_Msc_thesis/filter_100UMIs_barplot.png){#fig-barplot width="90%"}
 
-![Distribution of UMI and gene counts per cell after filtering at 100 UMIs for M9 and M9F conditions](../figures/violinplot_100UMIs.png){#fig-violin width="70%"}
+![Distribution of UMI and gene counts per cell after filtering at 100 UMIs for M9 and M9F conditions](../../../image/figures_Msc_thesis/violinplot_100UMIs.png){#fig-violin width="70%"}
 
-![Total number of cell barcodes retained for each biological replicate (with technical replicates indicated within each bar) across different culture conditions and timepoints after filtering at 100 UMIs](../figures/splitplot_barcodes_100UMIs.png){#fig-splitplot-barcodes}
+![Total number of cell barcodes retained for each biological replicate (with technical replicates indicated within each bar) across different culture conditions and timepoints after filtering at 100 UMIs](../../../image/figures_Msc_thesis/splitplot_barcodes_100UMIs.png){#fig-splitplot-barcodes}
 
 Filtering of low-quality cell barcodes with fewer than 100 UMIs per cell across all biological replicates in the single-cell RNA-seq experiment.
 :::
@@ -253,15 +253,15 @@ Filtering of low-quality cell barcodes with fewer than 100 UMIs per cell across 
 
 ::: {#fig-suppl-single-cell-analysis layout="[[1, 1], [1], [1]]"}
 
-![Transformation of the data with the python version of scTransform (BacSC pipeline)](../figures/fig_sc/scalling.png){#fig-scaling width="70%"}
+![Transformation of the data with the python version of scTransform (BacSC pipeline)](../../../image/figures_Msc_thesis/fig_sc/scalling.png){#fig-scaling width="70%"}
 
-![PCA analysis showing optimal number of principal components (based on the elbow method) the x axis is the number of principal components and the y axis is the explained variance](../figures/fig_sc/pca_choose.png){#fig-pca-choose width="50%"}
-
-
-![Comparison of different principal component axes (PC1 vs PC2, PC2 vs PC3, etc.) to assess separation of experimental groups](../figures/fig_sc/pca_conf.png){#fig-pca-conf width="50%"}
+![PCA analysis showing optimal number of principal components (based on the elbow method) the x axis is the number of principal components and the y axis is the explained variance](../../../image/figures_Msc_thesis/fig_sc/pca_choose.png){#fig-pca-choose width="50%"}
 
 
-![Heatmap of the top contributing genes (top 20) to the first principal components (PC2), based on scaled expression values (z-score per gene). Rows represent genes, columns represent single cells collected at each timepoints for all biological replicates. The legend at the right side of the heatmap shows the full name of the genes.](../figures/fig_sc/pca2_summary_top.png){#fig-pca2-summary-top width="70%"}
+![Comparison of different principal component axes (PC1 vs PC2, PC2 vs PC3, etc.) to assess separation of experimental groups](../../../image/figures_Msc_thesis/fig_sc/pca_conf.png){#fig-pca-conf width="50%"}
+
+
+![Heatmap of the top contributing genes (top 20) to the first principal components (PC2), based on scaled expression values (z-score per gene). Rows represent genes, columns represent single cells collected at each timepoints for all biological replicates. The legend at the right side of the heatmap shows the full name of the genes.](../../../image/figures_Msc_thesis/fig_sc/pca2_summary_top.png){#fig-pca2-summary-top width="70%"}
 
 Supplementary figures for the PCA analysis
 
@@ -277,13 +277,13 @@ Supplementary figures for the PCA analysis
 ::: {#fig-suppl-single-cell-analysis layout="[[1], [1,1]]"}
 
 
-![Table showing the top 50 most significant genes among differentially expressed genes between the two clusters identified by Leiden clustering, with gene names and significance thresholds (p-value adj) after FDR correction](../figures/fig_sc/tab.png){#fig-diff-exp width="70%"}
+![Table showing the top 50 most significant genes among differentially expressed genes between the two clusters identified by Leiden clustering, with gene names and significance thresholds (p-value adj) after FDR correction](../../../image/figures_Msc_thesis/fig_sc/tab.png){#fig-diff-exp width="70%"}
 
 
 
-![Heatmap  with z-score scaling (ranging from 0 to 1) of the top 50 most significant genes among differentially expressed genes between the two clusters identified by Leiden clustering. Rows represent genes, columns represent single cells of both leiden clusters](../figures/fig_sc/heatmap.png){#fig-heatmap width="70%"}
+![Heatmap  with z-score scaling (ranging from 0 to 1) of the top 50 most significant genes among differentially expressed genes between the two clusters identified by Leiden clustering. Rows represent genes, columns represent single cells of both leiden clusters](../../../image/figures_Msc_thesis/fig_sc/heatmap.png){#fig-heatmap width="70%"}
 
-![Violin plots showing five differentially expressed genes (rplA (30S ribosomal protein L1), ppsA, QLH64_28090 (phasin), rpoC, QLH64_04320 (flagellin)) between the two clusters identified by Leiden clustering](../figures/fig_sc/violin.png){#fig-violin-sc width="70%"}
+![Violin plots showing five differentially expressed genes (rplA (30S ribosomal protein L1), ppsA, QLH64_28090 (phasin), rpoC, QLH64_04320 (flagellin)) between the two clusters identified by Leiden clustering](../../../image/figures_Msc_thesis/fig_sc/violin.png){#fig-violin-sc width="70%"}
 
 Supplementary figures from UMAP clustering analysis revealing transcriptional heterogeneity in *P. brassicacearum* populations under iron stress.
 
