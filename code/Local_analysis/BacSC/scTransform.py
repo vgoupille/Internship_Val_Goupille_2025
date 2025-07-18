@@ -53,17 +53,9 @@ def _parallel_init(igenes_bin_regress, iumi_bin, ign, imm, ips):
     ps = ips
 
 
-def _to_dense_array(X):
-    """Convert sparse matrix to dense array or return dense array as is"""
-    if hasattr(X, "toarray"):
-        return X.toarray()
-    else:
-        return np.asarray(X)
-
-
 def _parallel_wrapper(j):
     name = gn[genes_bin_regress[j]]
-    y = _to_dense_array(umi_bin[:, j]).flatten()
+    y = umi_bin[:, j].A.flatten()
     pr = statsmodels.discrete.discrete_model.Poisson(y, mm)
     res = pr.fit(disp=False)
     mu = res.predict()
@@ -74,7 +66,7 @@ def _parallel_wrapper(j):
 def gmean(X, axis=0, eps=1):
     X = X.copy()
     X.data[:] = np.log(X.data + eps)
-    return np.exp(_to_dense_array(X.mean(axis)).flatten()) - eps
+    return np.exp(X.mean(axis).A.flatten()) - eps
 
 
 def theta_ml(y, mu):
@@ -155,7 +147,7 @@ def SCTransform(
     X.eliminate_zeros()
     gn = np.array(list(adata.var_names))
     cn = np.array(list(adata.obs_names))
-    genes_cell_count = _to_dense_array(X.sum(0)).flatten()
+    genes_cell_count = X.sum(0).A.flatten()
     genes = np.where(genes_cell_count >= min_cells)[0]
     genes_ix = genes.copy()
 
@@ -163,13 +155,13 @@ def SCTransform(
     Xraw = X.copy()
     gn = gn[genes]
     genes = np.arange(X.shape[1])
-    genes_cell_count = _to_dense_array(X.sum(0)).flatten()
+    genes_cell_count = X.sum(0).A.flatten()
 
     genes_log_gmean = np.log10(gmean(X, axis=0, eps=gmean_eps))
 
     if n_cells is not None and n_cells < X.shape[0]:
         cells_step1 = np.sort(rng.choice(X.shape[0], replace=False, size=n_cells))
-        genes_cell_count_step1 = _to_dense_array(X[cells_step1].sum(0)).flatten()
+        genes_cell_count_step1 = X[cells_step1].sum(0).A.flatten()
         genes_step1 = np.where(genes_cell_count_step1 >= min_cells)[0]
         genes_log_gmean_step1 = np.log10(
             gmean(X[cells_step1][:, genes_step1], axis=0, eps=gmean_eps)
@@ -179,11 +171,11 @@ def SCTransform(
         genes_step1 = genes
         genes_log_gmean_step1 = genes_log_gmean
 
-    umi = _to_dense_array(X.sum(1)).flatten()
+    umi = X.sum(1).A.flatten()
     log_umi = np.log10(umi)
     X2 = X.copy()
     X2.data[:] = 1
-    gene = _to_dense_array(X2.sum(1)).flatten()
+    gene = X2.sum(1).A.flatten()
     log_gene = np.log10(gene)
     umi_per_gene = umi / gene
     log_umi_per_gene = np.log10(umi_per_gene)

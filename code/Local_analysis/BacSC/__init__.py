@@ -23,11 +23,8 @@ from .clustering_opt import (
     cluster_train_test,
     find_optimal_clustering_resolution,
 )
-
-# Import the scDEED module itself
-from . import scDEED
 from .scDEED import (
-    scDEED as scDEED_function,  # Rename to avoid conflict
+    scDEED,
     create_permuted_data_scdeed,
     embed_data_scDEED,
     calculate_reliability_scores,
