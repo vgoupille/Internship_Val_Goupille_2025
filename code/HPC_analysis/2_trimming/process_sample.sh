@@ -5,7 +5,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOGS_DIR="${SCRIPT_DIR}/logs"
 SLURM_LOGS_DIR="${LOGS_DIR}/slurm"
 RESULTS_DIR="${SCRIPT_DIR}/results"
-ENV_DIR="/projects/microsplit/env/envSimpleTrimming"
+ENV_DIR="/projects/microsplit/env/envTrimming"
 
 # Function to get file size in GB
 get_file_size_gb() {

@@ -17,8 +17,8 @@ The pipeline consists of 6 sequential trimming steps:
 ### Main files
 - **`Trim.sh`** : Main script that submits SLURM jobs
 - **`process_sample.sh`** : Script that processes individual samples
-- **`create_env_simple_trimming.sh`** : Script to create conda environment
-- **`environment_simple_trimming.yml`** : Conda environment definition
+- **`create_env_trimming.sh`** : Script to create conda environment
+- **`environment_trimming.yml`** : Conda environment definition
 
 ### Required tools
 - **cutadapt** (v5.0) : For adapter trimming
@@ -32,7 +32,7 @@ The pipeline consists of 6 sequential trimming steps:
 
 ```bash
 # Submit the environment creation job
-sbatch create_env_simple_trimming.sh
+sbatch create_env_trimming.sh
 ```
 
 ### 2. Running the pipeline
@@ -165,7 +165,7 @@ The pipeline includes a resource monitoring system:
 
 ```bash
 # 1. Create the environment
-sbatch create_env_simple_trimming.sh
+sbatch create_env_trimming.sh
 
 # 2. Wait for environment creation, then run the pipeline
 sbatch Trim.sh --sample "BC_0076 BC_0077" --cpus 16 --mem 100G --time 5-00:00:00

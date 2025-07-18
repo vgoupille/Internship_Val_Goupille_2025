@@ -14,7 +14,7 @@ SLURM_LOGS_DIR="${SCRIPT_DIR}/logs/slurm"
 RESULTS_DIR="${SCRIPT_DIR}/results"
 INFO_DIR="${SCRIPT_DIR}/../../data/info"
 SAMPLES_YAML="${INFO_DIR}/samples/samples_trimming.yaml"
-ENV_DIR="${SCRIPT_DIR}/../../env/envSimpleTrimming"
+ENV_DIR="${SCRIPT_DIR}/../../env/envTrimming"
 
 # Load and activate conda environment
 source /local/env/envconda.sh
