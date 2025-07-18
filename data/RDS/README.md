@@ -6,29 +6,17 @@ This directory contains R objects (RDS format) converted from AnnData objects fo
 
 ```mermaid
 graph TD
-    A[AnnData Objects] --> B[4a_anndata_to_RDS.py]
+    A[AnnData Filtered Object] --> B[4a_anndata_to_RDS.py]
     B --> C[data/RDS/]
     
-    A1[Filtered AnnData<br/>3c final dataset] --> B
+    A --> A1["GeneFull_raw_unique_mult<br/>3c final filtered dataset<br/>Complete metadata"]
     
-    C --> C1[Seurat V5 Objects<br/>Ready for R analysis<br/>Complete metadata]
-    
-    subgraph Python["Python Ecosystem"]
-        A
-        A1
-    end
-    
-    subgraph R["R Ecosystem"]
-        C
-        C1
-    end
+    C --> C1["Seurat V5 object<br/>Ready for R analysis<br/>All metadata preserved"]
     
     style A fill:#fff3e0
     style A1 fill:#fff3e0
     style C fill:#fce4ec
     style C1 fill:#fce4ec
-    style Python fill:#e3f2fd
-    style R fill:#fce4ec
 ```
 
 ## 🎯 Purpose
@@ -128,5 +116,5 @@ sum(seurat_obj[["RNA"]]@counts > 0)
 **Note:** RDS files are generated from the filtered AnnData objects and contain all metadata from the original objects. The conversion preserves the complete analysis pipeline history while enabling seamless transition to R-based analyses.
 
 **Author:** Valentin Goupille  
-**Date:** 2025-01-13  
+**Date:** 2025-07-18  
 **Project:** Division of Labor - Single Cell Analysis

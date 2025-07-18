@@ -3,7 +3,7 @@
 Script to cleanup old AnnData directories after migration.
 
 Author: Valentin Goupille
-Date: 2025-01-13
+Date: 2025-07-18
 """
 
 import os

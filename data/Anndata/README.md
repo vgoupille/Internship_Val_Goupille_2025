@@ -30,44 +30,31 @@ graph TD
     B --> C[data/Anndata/raw/]
     C --> D[2c_add_metadata_to_anndata.py]
     D --> E[data/Anndata/with_metadata/]
+    
     E --> F[3a_filtering_100UMIs.py]
     F --> G[data/Anndata/filtered/]
-    F --> G1[data/Anndata/filtered/csv/3a_filtering_100UMIs/]
+    F --> G1[CSV reports: 3a_filtering_100UMIs/]
+    
     G --> H[3b_filtering_advanced_cell_v2.py]
     H --> I[data/Anndata/filtered/]
-    H --> I1[data/Anndata/filtered/csv/3b_filtering_advanced_cell/]
+    H --> I1[CSV reports: 3b_filtering_advanced_cell/]
+    
     I --> J[3c_filtering_advanced_gene.py]
     J --> K[data/Anndata/filtered/]
-    J --> K1[data/Anndata/filtered/csv/3c_filtering_advanced_gene/]
+    J --> K1[CSV reports: 3c_filtering_advanced_gene/]
+    
     K --> L[4a_anndata_to_RDS.py]
     L --> M[data/RDS/]
     
-    C --> C1["6 raw AnnData objects<br/>Gene/GeneFull variants<br/>raw/filtered matrices"]
-    E --> E1["6 objects with metadata<br/>+ cell experimental data<br/>+ gene NCBI annotations"]
-    G --> G2["Filtered .h5ad objects<br/>100 UMI threshold<br/>+ QC metrics"]
-    G1 --> G3["CSV reports<br/>filtering stats<br/>metadata"]
-    I --> I2["Advanced cell filtering<br/>Balanced subsampling<br/>RepTech filtering"]
-    I1 --> I3["CSV reports<br/>filtering summary"]
-    K --> K2["Final filtered dataset<br/>Gene filtering<br/>Protein-coding only"]
-    K1 --> K3["CSV reports<br/>gene filtering<br/>annotations"]
-    M --> M1["Seurat V5 objects<br/>Ready for R analysis<br/>Complete metadata"]
+    C --> C1["6 AnnData objects<br/>Gene/GeneFull variants<br/>raw/filtered matrices"]
+    E --> E1["6 objects + metadata<br/>Cell & gene annotations<br/>Experimental conditions"]
+    E --> E2["Select: GeneFull_raw_unique_mult<br/>for filtering pipeline"]
+    E2 --> F
     
-    subgraph Python["Python Ecosystem"]
-        C
-        E
-        G
-        K
-    end
-    
-    subgraph R["R Ecosystem"]
-        M
-    end
-    
-    subgraph Reports["Reports & Metadata"]
-        G1
-        I1
-        K1
-    end
+    G --> G2["Filtered: 100 UMI threshold<br/>QC metrics calculated"]
+    I --> I2["Advanced cell filtering<br/>Balanced subsampling<br/>3000 cells final"]
+    K --> K2["Final filtered dataset<br/>Protein-coding genes only<br/>Gene annotations"]
+    M --> M1["Seurat V5 object<br/>Ready for R analysis"]
     
     style A fill:#e1f5fe
     style C fill:#f3e5f5
@@ -76,12 +63,10 @@ graph TD
     style I fill:#fff3e0
     style K fill:#fff3e0
     style M fill:#fce4ec
+    style E2 fill:#ffecb3
     style G1 fill:#f1f8e9
     style I1 fill:#f1f8e9
     style K1 fill:#f1f8e9
-    style Python fill:#e3f2fd
-    style R fill:#fce4ec
-    style Reports fill:#f1f8e9
 ```
 
 ## 📊 Directory Contents
@@ -240,17 +225,6 @@ Contains filtered objects from different steps:
 - Seurat V5 objects converted from filtered AnnData
 - Compatible with R/Seurat for advanced analyses
 
-## 🛠️ Utility Scripts
-
-Helper scripts have been created for easier management:
-
-- `create_anndata_structure.py` - Creates Anndata directory structure
-- `create_rds_structure.py` - Creates RDS directory structure
-- `migrate_existing_anndata.py` - Migrates existing files
-- `cleanup_old_anndata_dirs.py` - Cleans up old directories
-- `organize_csv_reports.py` - Organizes CSV reports by step
-- `anndata_organization_summary.py` - Displays complete summary
-
 ## 📈 Naming Convention
 
 Files follow a descriptive naming pattern:
@@ -299,17 +273,8 @@ To use this structure:
    gene_metadata <- seurat_obj[["RNA"]]@meta.data
    ```
 
-4. **Consult reports:**
-   ```bash
-   # Complete summary
-   python code/Local_analysis/anndata_organization_summary.py
-   
-   # Optional cleanup
-   python code/Local_analysis/cleanup_old_anndata_dirs.py
-   ```
-
 ---
 
 **Author:** Valentin Goupille  
-**Date:** 2025-01-13  
+**Date:** 2025-07-18  
 **Project:** Division of Labor - Single Cell Analysis
