@@ -13,8 +13,10 @@
 . /local/env/envconda.sh
 
 
-ENV_PATH="env/envSimpleTrimming"
-YAML_FILE="scripts/2_trimming/simple_trimming/environment_simple_trimming.yml"
+# Define paths relative to script location
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ENV_PATH="${SCRIPT_DIR}/../../env/envSimpleTrimming"
+YAML_FILE="${SCRIPT_DIR}/environment_simple_trimming.yml"
 
 # Check if environment exists
 if [ -d "$ENV_PATH" ]; then

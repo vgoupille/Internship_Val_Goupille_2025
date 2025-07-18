@@ -66,7 +66,9 @@ trim_tso() {
     local run_id="$7"
 
     log "INFO" "Step 1: Trimming TSO sequences..." "$run_id"
-    log "INFO" "Using ${SLURM_CPUS_PER_TASK} CPUs" "$run_id"
+    # Set CPU count (fallback to 1 if SLURM variable not set)
+    local cpu_count="${SLURM_CPUS_PER_TASK:-1}"
+    log "INFO" "Using ${cpu_count} CPUs" "$run_id"
     
     # Monitor memory usage
     local mem_usage_file="${output_dir}/${sample_name}_tso_mem_usage.txt"
@@ -76,7 +78,7 @@ trim_tso() {
     done) > "$mem_usage_file" &
     local mem_monitor_pid=$!
 
-    cutadapt -j ${SLURM_CPUS_PER_TASK} \
+    cutadapt -j ${cpu_count} \
         -g "AAGCAGTGGTATCAACGCAGAGTGAATGGG; min_overlap=6; max_errors=0.2" \
         -g "CAGAGTGAATGGG; min_overlap=6; max_errors=0.2" \
         --pair-filter=both \
@@ -145,7 +147,8 @@ trim_polya() {
     local run_id="$7"
 
     log "INFO" "Step 3: Trimming polyA sequences..." "$run_id"
-    cutadapt -j ${SLURM_CPUS_PER_TASK} \
+    local cpu_count="${SLURM_CPUS_PER_TASK:-1}"
+    cutadapt -j ${cpu_count} \
         -a "A{12}; min_overlap=12; max_errors=0.2" \
         --pair-filter=both \
         -m 20: \
@@ -170,7 +173,8 @@ trim_specific_adapter() {
     local run_id="$7"
 
     log "INFO" "Step 4: Trimming specific adapter CCACAGTCTCAAGCAC..." "$run_id"
-    cutadapt -j ${SLURM_CPUS_PER_TASK} \
+    local cpu_count="${SLURM_CPUS_PER_TASK:-1}"
+    cutadapt -j ${cpu_count} \
         -a "CCACAGTCTCAAGCAC; min_overlap=6; max_errors=0.1" \
         --pair-filter=both \
         -m 20: \
@@ -195,7 +199,8 @@ trim_linkers() {
     local run_id="$7"
 
     log "INFO" "Step 5: Trimming linkers and specific adapters..." "$run_id"
-    cutadapt -j ${SLURM_CPUS_PER_TASK} \
+    local cpu_count="${SLURM_CPUS_PER_TASK:-1}"
+    cutadapt -j ${cpu_count} \
         -a "CCACAGTCTCAAGCACGTGGAT; min_overlap=6; max_errors=0.2" \
         -a "AGTCGTACGCCGATGCGAAACATCGGCCAC; min_overlap=6; max_errors=0.2" \
         -a "AGATCGGAAGAGCACACGTCTGAACTCCAGTCA; min_overlap=6; max_errors=0.2" \
@@ -262,9 +267,9 @@ main() {
     log "INFO" "Starting processing for sample: ${sample_name}" "$RUN_ID"
     log "INFO" "Output directory: ${output_dir}" "$RUN_ID"
     log "INFO" "System information:" "$RUN_ID"
-    log "INFO" "CPUs available: ${SLURM_CPUS_PER_TASK}" "$RUN_ID"
-    log "INFO" "Memory available: ${SLURM_MEM_PER_NODE}" "$RUN_ID"
-    log "INFO" "Node: ${SLURM_NODELIST}" "$RUN_ID"
+    log "INFO" "CPUs available: ${SLURM_CPUS_PER_TASK:-1}" "$RUN_ID"
+    log "INFO" "Memory available: ${SLURM_MEM_PER_NODE:-N/A}" "$RUN_ID"
+    log "INFO" "Node: ${SLURM_NODELIST:-localhost}" "$RUN_ID"
     
     # Estimate required memory
     local estimated_mem=$(estimate_required_memory "$r1_input" "$r2_input")
@@ -302,9 +307,9 @@ main() {
     echo "  R1: ${r1_input} ($(get_file_size_gb "$r1_input") GB)" >> "$resource_summary"
     echo "  R2: ${r2_input} ($(get_file_size_gb "$r2_input") GB)" >> "$resource_summary"
     echo "SLURM resources:" >> "$resource_summary"
-    echo "  CPUs: ${SLURM_CPUS_PER_TASK}" >> "$resource_summary"
-    echo "  Memory: ${SLURM_MEM_PER_NODE}" >> "$resource_summary"
-    echo "  Node: ${SLURM_NODELIST}" >> "$resource_summary"
+    echo "  CPUs: ${SLURM_CPUS_PER_TASK:-1}" >> "$resource_summary"
+    echo "  Memory: ${SLURM_MEM_PER_NODE:-N/A}" >> "$resource_summary"
+    echo "  Node: ${SLURM_NODELIST:-localhost}" >> "$resource_summary"
     echo "Estimated required memory: ${estimated_mem}" >> "$resource_summary"
     
     # Define intermediate files with new directory structure

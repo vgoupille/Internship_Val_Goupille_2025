@@ -7,14 +7,14 @@
 #SBATCH --cpus-per-task=1
 #SBATCH --partition=genouest
 
-# Define paths
-SCRIPT_DIR="/projects/microsplit/scripts/2_trimming"
-LOGS_DIR="/projects/microsplit/scripts/2_trimming/logs"
-SLURM_LOGS_DIR="/projects/microsplit/scripts/2_trimming/logs/slurm"
-RESULTS_DIR="/projects/microsplit/scripts/2_trimming/results"
-INFO_DIR="/projects/microsplit/data/info"
-SAMPLES_YAML="/projects/microsplit/data/info/samples/samples_trimming.yaml"
-ENV_DIR="/projects/microsplit/env/envSimpleTrimming"
+# Define paths (relative to script location)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOGS_DIR="${SCRIPT_DIR}/logs"
+SLURM_LOGS_DIR="${SCRIPT_DIR}/logs/slurm"
+RESULTS_DIR="${SCRIPT_DIR}/results"
+INFO_DIR="${SCRIPT_DIR}/../../data/info"
+SAMPLES_YAML="${INFO_DIR}/samples/samples_trimming.yaml"
+ENV_DIR="${SCRIPT_DIR}/../../env/envSimpleTrimming"
 
 # Load and activate conda environment
 source /local/env/envconda.sh
@@ -181,8 +181,8 @@ submit_slurm_job() {
     cat > "${job_script}" << EOF
 #!/bin/bash
 #SBATCH --job-name=microsplit_trim_${sample_name}
-#SBATCH --output=/projects/microsplit/scripts/2_trimming/logs/slurm/${RUN_ID}_${sample_name}_%j.out
-#SBATCH --error=/projects/microsplit/scripts/2_trimming/logs/slurm/${RUN_ID}_${sample_name}_%j.err
+#SBATCH --output=${SLURM_LOGS_DIR}/${RUN_ID}_${sample_name}_%j.out
+#SBATCH --error=${SLURM_LOGS_DIR}/${RUN_ID}_${sample_name}_%j.err
 #SBATCH --time=${SLURM_TIME}
 #SBATCH --mem=${SLURM_MEM}
 #SBATCH --cpus-per-task=${SLURM_CPUS}
