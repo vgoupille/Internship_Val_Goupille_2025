@@ -30,7 +30,7 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # %%
 # Load the filtered data from 3b_v2
 print("📂 Loading filtered data from 3b_v2...")
-INPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+INPUT_PATH = "data/Anndata/filtered"
 INPUT_FILE = "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3b_v2.h5ad"
 
 # Load the filtered data
@@ -373,7 +373,7 @@ for col in annotation_cols:
 # %%
 # Save the final filtered dataset and reports
 print("\n💾 Saving final filtered dataset and reports...")
-OUTPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+OUTPUT_PATH = "data/Anndata/filtered"
 OUTPUT_FILE = "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c.h5ad"
 
 os.makedirs(OUTPUT_PATH, exist_ok=True)
@@ -381,15 +381,13 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 # Save the final dataset
 adata_final_genes_filtered.write_h5ad(os.path.join(OUTPUT_PATH, OUTPUT_FILE))
 
-print(f"✅ Final dataset saved to: {os.path.join(OUTPUT_PATH, OUTPUT_FILE)}")
-print(
-    f"📊 Final dataset contains: {adata_final_genes_filtered.n_obs:,} cells × {adata_final_genes_filtered.n_vars:,} genes"
-)
+# Create CSV subdirectory for this step
+csv_output_path = os.path.join(OUTPUT_PATH, "csv", "3c_filtering_advanced_gene")
+os.makedirs(csv_output_path, exist_ok=True)
 
 # Save summary report
-summary_report_path = os.path.join(OUTPUT_PATH, "gene_filtering_summary_report.csv")
+summary_report_path = os.path.join(csv_output_path, "gene_filtering_summary_report.csv")
 summary_df.to_csv(summary_report_path, index=False)
-print(f"📋 Summary report saved to: {summary_report_path}")
 
 # Save gene annotation summary
 annotation_summary = pd.DataFrame(
@@ -406,9 +404,13 @@ annotation_summary = pd.DataFrame(
         for col in annotation_cols
     ]
 )
-annotation_report_path = os.path.join(OUTPUT_PATH, "gene_annotation_summary.csv")
+annotation_report_path = os.path.join(csv_output_path, "gene_annotation_summary.csv")
 annotation_summary.to_csv(annotation_report_path, index=False)
-print(f"🏷️ Gene annotation summary saved to: {annotation_report_path}")
+
+print(f"✅ Final dataset saved to: {os.path.join(OUTPUT_PATH, OUTPUT_FILE)}")
+print(
+    f"📊 Final dataset contains: {adata_final_genes_filtered.n_obs:,} cells × {adata_final_genes_filtered.n_vars:,} genes"
+)
 
 print("\n🎉 3c Advanced gene filtering completed successfully!")
 

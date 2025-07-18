@@ -24,8 +24,8 @@ from visualization_functions import (
 # %%
 # Constants for better maintainability
 UMI_THRESHOLD = 100
-DATA_PATH = "data/anndata_objects_with_complete_metadata/"
-OUTPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+DATA_PATH = "data/Anndata/with_metadata/"
+OUTPUT_PATH = "data/Anndata/filtered"
 INPUT_FILE = "GeneFull_raw_unique_mult_with_metadata.h5ad"
 OUTPUT_FILE = "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI.h5ad"
 
@@ -272,10 +272,14 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 output_file = os.path.join(OUTPUT_PATH, OUTPUT_FILE)
 adata_filtered.write(output_file)
 
+# Create CSV subdirectory for this step
+csv_output_path = os.path.join(OUTPUT_PATH, "csv", "3a_filtering_100UMIs")
+os.makedirs(csv_output_path, exist_ok=True)
+
 # Save filtering statistics as CSV
 # This CSV contains: initial_cells, cells_after_filtering, cells_removed, retention_rate_percent, threshold_applied, timestamp
 stats_file = os.path.join(
-    OUTPUT_PATH, OUTPUT_FILE.replace(".h5ad", "_filtering_stats.csv")
+    csv_output_path, OUTPUT_FILE.replace(".h5ad", "_filtering_stats.csv")
 )
 filtering_stats = pd.DataFrame(
     {

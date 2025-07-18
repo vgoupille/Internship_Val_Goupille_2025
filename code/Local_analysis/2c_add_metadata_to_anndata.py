@@ -345,11 +345,11 @@ def check_columns_after_metadata_addition(adata, filename):
 
 
 def process_anndata_objects(
-    anndata_dir: str = "data/anndata_objects",
+    anndata_dir: str = "data/Anndata/raw",
     barqc_dir: str = "data/barcodes_result/barqc",
     metadata_file: str = "data/barcodes_result/metadata_DOL_Exp1_complete.xlsx",
     ncbi_file: str = "data/ncbi/ncbi_dataset_with_id.tsv",
-    output_dir: str = "data/anndata_objects_with_complete_metadata",
+    output_dir: str = "data/Anndata/with_metadata",
 ):
     """
     Process all AnnData objects and add both cell and gene metadata
@@ -446,11 +446,11 @@ def main():
     Main function
     """
     # Configuration
-    anndata_dir = "data/anndata_objects"
+    anndata_dir = "data/Anndata/raw"
     barqc_dir = "data/barcodes_result/barqc"
     metadata_file = "data/barcodes_result/metadata_DOL_Exp1_complete.xlsx"
     ncbi_file = "data/ncbi/ncbi_dataset_with_id.tsv"
-    output_dir = "data/anndata_objects_with_complete_metadata"
+    output_dir = "data/Anndata/with_metadata"
 
     process_anndata_objects(
         anndata_dir, barqc_dir, metadata_file, ncbi_file, output_dir

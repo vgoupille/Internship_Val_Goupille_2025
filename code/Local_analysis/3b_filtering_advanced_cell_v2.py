@@ -32,7 +32,7 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # %%
 # Load the filtered data from 3a
 print("📂 Loading filtered data from 3a...")
-INPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+INPUT_PATH = "data/Anndata/filtered"
 INPUT_FILE = "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI.h5ad"
 
 # Load the filtered data
@@ -532,7 +532,7 @@ print(f"   Retention rate: {retention_percentage:.1f}%")
 # %%
 # Save the final filtered dataset
 print("\n💾 Saving final filtered dataset...")
-OUTPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+OUTPUT_PATH = "data/Anndata/filtered"
 OUTPUT_FILE = (
     "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3b_v2.h5ad"
 )
@@ -542,15 +542,18 @@ os.makedirs(OUTPUT_PATH, exist_ok=True)
 # Save the final dataset
 adata_filtered_100UMI_balanced_final.write_h5ad(os.path.join(OUTPUT_PATH, OUTPUT_FILE))
 
+# Create CSV subdirectory for this step
+csv_output_path = os.path.join(OUTPUT_PATH, "csv", "3b_filtering_advanced_cell")
+os.makedirs(csv_output_path, exist_ok=True)
+
+# Save summary report
+summary_report_path = os.path.join(csv_output_path, "filtering_summary_report_v2.csv")
+summary_df.to_csv(summary_report_path, index=False)
+
 print(f"✅ Final dataset saved to: {os.path.join(OUTPUT_PATH, OUTPUT_FILE)}")
 print(
     f"📊 Final dataset contains: {adata_filtered_100UMI_balanced_final.n_obs:,} cells × {adata_filtered_100UMI_balanced_final.n_vars:,} genes"
 )
-
-# Save summary report
-summary_report_path = os.path.join(OUTPUT_PATH, "filtering_summary_report_v2.csv")
-summary_df.to_csv(summary_report_path, index=False)
-print(f"📋 Summary report saved to: {summary_report_path}")
 
 print("\n🎉 3b v2 Advanced cell filtering completed successfully!")
 

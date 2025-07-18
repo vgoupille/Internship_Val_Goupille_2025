@@ -162,7 +162,7 @@ def main():
     solo_out_path = "data/STARsolo_result/merged_trimmed/merged/Output_DOL_microsplit_starsolo2/starsolo_output2/Solo.out"
 
     # Output directory for AnnData objects
-    output_dir = "data/anndata_objects"
+    output_dir = "data/Anndata/raw"
     # ================================
 
     # Verify input directory exists

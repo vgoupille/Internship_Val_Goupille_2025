@@ -24,7 +24,7 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # %%
 # Load the filtered data from 3c
 print("📂 Loading filtered data from 3c...")
-INPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+INPUT_PATH = "data/Anndata/filtered"
 INPUT_FILE = "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c.h5ad"
 
 # Load the AnnData object
@@ -158,7 +158,7 @@ cat("Seurat version:", as.character(packageVersion("Seurat")), "\n")
 # Save as RDS file
 print("\n💾 Saving Seurat object as RDS...")
 
-OUTPUT_PATH = "data/anndata_objects_with_complete_metadata_filtered"
+OUTPUT_PATH = "data/RDS"
 OUTPUT_FILE = (
     "GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c_SeuratV5.rds"
 )
