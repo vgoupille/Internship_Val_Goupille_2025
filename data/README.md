@@ -36,3 +36,24 @@ Contains files in RDS format for analyses in R.
 
 ### `STARsolo_result/`
 Contains STARsolo outputs (without ~250 GB BAM files that remain available on the cluster).
+
+---
+
+⚠️ **IMPORTANT: Large files missing from repository**
+
+This GitHub repository does **not** contain all data files due to GitHub's file size limitations (100MB max per file). Several directories appear empty or incomplete because large files are ignored by `.gitignore`.
+
+## Missing files to retrieve
+
+### 📁 Directories mostly empty in the repo:
+- **`raw_data/`** - Original FASTQ files (ignored)
+- **`Trim_process/`** - Data after trimming (ignored)  
+- **`merged_data/`** - Merged files (ignored)
+- **`subsampled_data/`** - Subsampled data (partially ignored)
+
+### 📄 File types ignored:
+- Files `.fastq`, `.fastq.gz`, `.bam`, `.gz` 
+- Files `.h5ad` > 100MB
+- Files `.rds`, `.RDS` > 100MB
+
+**→ Go on the HPC server to retrieve complete data**
