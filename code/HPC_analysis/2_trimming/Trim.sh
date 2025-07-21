@@ -11,7 +11,7 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOGS_DIR="${SCRIPT_DIR}/logs"
 SLURM_LOGS_DIR="${SCRIPT_DIR}/logs/slurm"
-RESULTS_DIR="${SCRIPT_DIR}/results"
+RESULTS_DIR="${SCRIPT_DIR}/../../data/Trim_process"
 INFO_DIR="${SCRIPT_DIR}/../../data/info"
 SAMPLES_YAML="${INFO_DIR}/samples/samples_trimming.yaml"
 ENV_DIR="${SCRIPT_DIR}/../../env/envTrimming"
