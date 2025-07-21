@@ -1,0 +1,278 @@
+---
+title: "day_3_integration_hands_on"
+author: "Anita Scoones"
+output: html_document
+---
+
+# Integration -----------------
+# Hands-on: Data Integration with Seurat (Day 3)
+
+This workbook will guide you step-by-step through the integration of multiple single-cell datasets using Seurat and Harmony (built in version!). Data integration is essential when working with datasets from different conditions, batches, or even different experiments, allowing you to align cells across datasets to achieve a unified analysis.
+
+After completing this tutorial, you can use this workbook as a template for future integration tasks. Remember that each dataset has unique characteristics, so always review and adapt the analysis steps to fit the specifics of your data and experimental design.
+
+*NOTE: Parts of this script have been left blank, its up to you to fill them in based on what you've learned so far!*
+
+### Step 0: Loading your packages
+
+```{r}
+library(Seurat)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+```
+
+
+
+
+### Step 1: Reading in the data 
+
+In this step, we’ll load two single-cell datasets generated with 10X Genomics, representing different conditions (e.g., a test and a control). Depending on how your data is organised, there are two common approaches (we will be following approach 1):
+
+	1.	Load separate datasets for each condition: This is the most straightforward approach. If you have separate folders for each condition (e.g., “control” and “test”), you can load each one directly using Read10X().
+	
+*To do: Fill in filepaths and complete commands to create sobjs*
+```{r Option 1: Loading Separate Datasets}
+# Load Control PBMC sample 1: (This is the same data as yesterday!)
+control_data <- Read10X(data.dir = "~/path/to/control/folder/filtered_gene_bc_matrices") # FILL HERE
+
+
+# Load Test PBMC sample 2: 
+test_data <- Read10X(data.dir = "~/path/to/test/folder/filtered_feature_bc_matrix") # FILL HERE
+
+
+#Create Seurat objects for each dataset 
+control_sobj <- CreateSeuratObject(counts = ---, project = "Control") # FILL HERE
+test_sobj <- CreateSeuratObject(counts = ---, project = "Test") # FILL HERE
+```
+
+
+2.	Combined dataset with multiple conditions: If data for different conditions is combined in a single expression matrix (common with plate-based experiments), you can load the full matrix and then split by condition (or any meta data, in fact). Suppose we have an expression matrix of 96 cells where columns 1–48 contain control cells, and columns 49–96 contain test cells. Here, each “cell” is identified by a well position on the plate instead of a barcode. Using this information, we can label each cell by condition and split the Seurat object.
+
+#e.g. 
+ Gene 	  Cell_A1	Cell_A2 …Cell_D7	Cell_E9	 Cell_G1 … Cell_H12
+Gene_A	   1.2	    0.8	  …	1.3	     2.1    	1.7	   …	1.5
+Gene_B     0.5   	  1.0	  …	0.9	     0.3	    0.4	   …  0.7
+...
+
+#In this example setup:
+
+•	Columns Cell_1 (A1) to Cell_48 (H6) represent “Control” samples.
+•	Columns Cell_49 (A7) to Cell_96 (H12) represent “Test” samples.
+
+*Do not run, example only*
+```{r Option 2: Loading a Combined Dataset and Splitting by Condition}
+
+# Load the combined gene expression matrix
+smartseq_matrix <- read.table(file = '/path/to/gene_expression_matrix.tsv', header = TRUE, row.names = 1)
+
+# Create a Seurat object for the combined data - but at this point you still haven't assigned each cell a condition
+ss2_sobj <- CreateSeuratObject(counts = smartseq_matrix, project = "SS2")
+
+# Define conditions based on cell indices (columns 1-48 as Control, columns 49-96 as Test) , and add this to a column in your meta data called "condition"
+ss2_sobj@meta.data$condition <- ifelse(as.numeric(gsub(".*_", "", colnames(ss2_sobj))) <= 48, "Control", "Test")
+
+# Split objects for each condition - subset() splits combined_sobj into control_sobj and test_sobj, two Seurat objects, for separate analysis of each condition (and then integration!)
+
+control_sobj <- subset(ss2_sobj, subset = condition == "Control")
+test_sobj <- subset(ss2_sobj, subset = condition == "Test")
+```
+	
+
+
+
+
+### Step 2: Assigning metatata (experimental condition and % mito)
+*To do: Complete commands to check meta data*
+```{r Assign condition labels to metadata for each Seurat object}
+
+control_sobj@meta.data$condition <- "Control"
+
+test_sobj@meta.data$condition <- "Test"
+
+# Remember you can always view each Seurat object to confirm the condition labels are correctly assigned. Try viewing your new condition column in your meta data, just to be sure! Here are some ways to do it 
+
+view() # FILL HERE OR
+
+head() # FILL HERE 
+```
+
+*To do: Complete commands to identify mitochondrial genes in the data*
+*---TIP: Don't forget to use the right operator to signify 'starts with'*
+```{r Use PercentageFeatureSet() to add MT metric into the meta data of our object before doing anything else}
+
+# We can also use [["new"]] instead of sobj@meta.data$new to create a "new" meta data slot.
+
+control_sobj[["percent.mt"]] <- PercentageFeatureSet(control_sobj, pattern = "---") # FILL HERE
+test_sobj[["percent.mt"]] <- PercentageFeatureSet(test_sobj, pattern = "---") # FILL HERE
+```
+
+
+
+
+
+### Step 3: Quality control (QC)
+
+*To do: Complete commands to visualize QC metrics*
+```{r First, let's visually inspect the quality of our datasets (nFeature_RNA, nCount_RNA and percent.mt indivudally}
+
+VlnPlot(control_sobj, features = c("---", "---", "---"), ncol = 3) # FILL HERE
+VlnPlot(test_sobj, features = c("---", "---", "---"), ncol = 3) # FILL HERE
+
+
+# We can also merge our samples into a single seurat object using merge() to visualise them on the same graph (note this is simply combining both samples into a single object, this is NOT integration!)
+
+samples_merged <- merge(control_sobj, y = test_sobj, add.cell.ids = c("control", "test"))
+
+VlnPlot(samples_merged, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3, split.by = "condition")
+```
+
+**Question:** 
+- What do you notice about these two datasets? 
+- Should we perform our QC subsetting pre- or post- combining our data? 
+
+```{r}
+# if you wish to delete an object from your environment you can use rm()
+
+```
+
+
+**Tip**: Remember we can use the function FeatureScatter() if you wish to visualise the relationship between metadata variables (nFeature_RNA, nCount_RNA, percent.mt etc).
+
+
+
+
+
+### Step 4: Data subsetting 
+
+#### Determining Cutoffs
+Remember that: 
+
+(1) Low-quality cells or empty droplets will often have very few genes
+
+(2) Cell doublets or multiplets may exhibit high gene counts
+
+(3) Low-quality / dying cells often exhibit extensive mitochondrial contamination
+
+*To do: Fill '---' entries to complete commands to subset your datasets. DONT FORGET! If you overwrite the object name, the previous object is deleted. You can call your filtered object a different name if you wish to keep both.*
+```{r Subset each dataset individually}
+control_sobj <- subset(control_sobj, subset = nFeature_RNA > --- & nFeature_RNA < ---- & percent.mt < --) # FILL IN NUMBERS
+
+test_sobj <- subset(test_sobj, subset = nFeature_RNA > --- & nFeature_RNA < ---- & percent.mt < --) # FILL IN NUMBERS
+```
+
+```{r Merge the newly filtered seurat objects}
+filtered_merged_sobj <- merge(control_sobj, y = test_sobj, add.cell.ids = c("control", "test"))
+
+head(table(filtered_merged_sobj$orig.ident))
+```
+
+
+
+### Step 5: Analysis without integration
+
+Run the analysis without integration on the merged object to explore what the consequences would be if you were to skip integration.
+
+---Note: This is the exact same workflow and yesterday's Seurat session, we've just simplified the workflow for the purposes of time into two functions!---
+
+*To do: Complete the command to run the pre-processing function*
+```{r Pre-processing; normalisation, var features, data scaling and dimensionality reduction with PCA}
+preprocessSeuratObject <- function(obj, pca_reduction_name = 'pca') {
+  obj <- NormalizeData(obj)
+  obj <- FindVariableFeatures(obj)
+  obj <- ScaleData(obj)
+  obj <- RunPCA(obj, features = VariableFeatures(object = obj))
+  
+  return(obj)
+}
+
+filtered_merged_sobj <- --- %>% preprocessSeuratObject() # FILL HERE with your sobj name
+```
+
+*To do: Run chunk as is*
+```{r Clustering; dimensionality reduction with UMAP, finding neighbours and clusters}
+perform_clustering <- function(seurat_obj) {
+  # Run UMAP
+  seurat_obj <- RunUMAP(seurat_obj, reduction.name = 'umap', dims = 1:15)
+  # Find neighbors and clusters on the UMAP space
+  seurat_obj <- FindNeighbors(object = seurat_obj, dims = 1:15)
+  seurat_obj <- FindClusters(seurat_obj, resolution = 0.5)
+  
+  return(seurat_obj)
+}
+
+filtered_merged_sobj <- filtered_merged_sobj %>% perform_clustering()
+```
+
+```{r Use 'group.by =' to visualise the relationship of your clusters to sample "condition" }
+DimPlot(filtered_merged_sobj, group.by = "seurat_clusters") | DimPlot(filtered_merged_sobj, group.by = "condition")
+```
+**Question:** What do you notice about your dataset when you group the cells by "condition"? 
+
+
+
+
+
+
+### Step 6: Perform integration
+
+Through this exercise, you can see why integration is essential for aligning shared cell types and states across datasets. Effective integration not only enhances statistical power but, more importantly, enables accurate comparative analysis between datasets. Earlier versions of Seurat used an anchor-based integration approach, but with the emergence of powerful new methods, Seurat now offers a more flexible, streamlined infrastructure to implement different integration algorithms in a single line of code. Here, we’ll explore two of these integration methods: the traditional Anchor-based CCA integration (method = "CCAIntegration") and Harmony integration (method = "HarmonyIntegration"), each with unique strengths for aligning multi-condition datasets.
+
+---*Question* What integration methods does Seurat support with IntegrateLayers()?
+
+*To do: Complete commands to run integration on your merged seurat object*
+```{r Integration using CCA}
+# Integration using CCA
+
+integrated_cca_object <- IntegrateLayers(
+  object = ________, method = "---",
+  orig.reduction = "pca", new.reduction = "integrated.cca",
+  verbose = FALSE) # FILL HERE
+
+# Run clustering and UMAP
+integrated_cca_object <- FindNeighbors(integrated_cca_object, reduction = "integrated.cca", dims = 1:30)
+integrated_cca_object <- FindClusters(integrated_cca_object, resolution = 0.5)
+integrated_cca_object <- RunUMAP(integrated_cca_object, reduction = "integrated.cca", dims = 1:30)
+
+DimPlot(merged_sobj, group.by = "condition") | DimPlot(integrated_cca_object, group.by = "condition", reduction = "cca_UMAP") 
+```
+
+
+*To do: Complete commands to run integration on your merged seurat object*
+```{r Integration using Harmony}
+harmony_object <- IntegrateLayers(
+  object = ________, method = "---",
+  orig.reduction = "pca", new.reduction = "harmony",
+  verbose = FALSE) # FILL HERE
+
+harmony_object <- FindNeighbors(harmony_object, reduction = "harmony", dims = 1:30)
+harmony_object <- FindClusters(harmony_object, resolution = 0.5, cluster.name = "harmony_clusters")
+harmony_object <- RunUMAP(harmony_object, reduction = "harmony", dims = 1:30, reduction.name = "harmony_UMAP")
+
+DimPlot(merged_sobj, group.by = "condition") | DimPlot(harmony_object, group.by = "condition", reduction = "harmony_UMAP")
+```
+
+
+---*Question* Try plotting your data before v after integration side-by-side. 
+```{r}
+DimPlot(merged_sobj, group.by = "condition") | DimPlot(integrated_cca_object, reduction = "cca_UMAP", group.by = "condition") | DimPlot(harmony_object, reduction = "harmony_UMAP", group.by = "condition")
+```
+
+
+*Question* Use a feature expression plot of marker gene of your choice to demonstrate integration has grouped cells by type, not biological condition.
+```{r}
+# Before integration
+FeaturePlot(-, features = "-")
+
+DimPlot(-) 
+
+DimPlot(-, group.by = "condition") 
+
+# After integration
+
+FeaturePlot(-, features = "-")
+
+DimPlot(-) 
+
+DimPlot(-, group.by = "condition") 
+```

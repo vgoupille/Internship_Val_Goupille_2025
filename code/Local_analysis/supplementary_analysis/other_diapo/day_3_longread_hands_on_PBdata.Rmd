@@ -1,0 +1,375 @@
+---
+title: "Hands on: Seurat data analysis (Long Read)"
+author: "AnitaScoones"
+output: html_document
+html_document: default
+pdf_document: default
+---
+
+# Long read workflow -----------------
+# Hands on: Seurat data analysis (Long-Read Data)
+
+This workbook will take you through step-by-step how to conduct the downstream analysis of your long-read single-cell data in Seurat. You will notice this follows the same workflow as Day 2, with only some (but important!) nuances related to long-read data. Unlike the first tutorial, some code chunks are incomplete, and you will need to tap into the knowledge you have gained in this course to run through the tutorial.
+
+Don't forget that throughout your analysis it is good practise to save your progress at regular intervals.  To do this you can use the following command: `saveRDS(seurat_object, file = 'seurat_object.rds')`
+
+## Long-read data Seurat Workflow
+
+## Step 0: Loading your packages
+
+To use the software packages we need in R, first you will have to load the packages. Use the `library()` function as you have done throughout this course to load it into the environment. 
+
+```{r Loading packages necessary for tutorial, warning = FALSE, message = FALSE}
+#Loading packages necessary for tutorial
+library(Seurat)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+```
+
+## Step 1: Reading in the long-read single cell data 
+
+This involves slightly different steps than short-read scRNA-seq data, as you now have data at *both the gene- and isoform-level* from the same experiment. Here, we still use the  `Read10X()` function to return unique molecular identified (UMI) count matrices, but must perform this for each data type. 
+
+### PacBio dataset loading
+
+This script uses publicly available data which can be found at https://www.pacb.com/connect/datasets/. This is a dataset containing 10x Chromium Single Cell 3' libraries that have been concatenated using the PacBio Kinnex kit (formerly known as MAS-seq) for higher throughput long-read sequencing. The sample type used here is Homo sapiens PBMC cells downloaded from  https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/ .  
+
+*To Do: Run chunk as is*
+```{r Defining data directory and loading matrices, warning = FALSE, message = FALSE}
+# File URLs
+genes_urls <- c(
+  "https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/DATA-MAS-SQ2-PBMC_5kcells/4-SeuratMatrix/NoNovelGenesIsoforms/genes_seurat/barcodes.tsv",
+  "https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/DATA-MAS-SQ2-PBMC_5kcells/4-SeuratMatrix/NoNovelGenesIsoforms/genes_seurat/genes.tsv",
+  "https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/DATA-MAS-SQ2-PBMC_5kcells/4-SeuratMatrix/NoNovelGenesIsoforms/genes_seurat/matrix.mtx"
+)
+
+isoforms_urls <- c(
+  "https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/DATA-MAS-SQ2-PBMC_5kcells/4-SeuratMatrix/NoNovelGenesIsoforms/isoforms_seurat/barcodes.tsv",
+  "https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/DATA-MAS-SQ2-PBMC_5kcells/4-SeuratMatrix/NoNovelGenesIsoforms/isoforms_seurat/genes.tsv",
+  "https://downloads.pacbcloud.com/public/dataset/Kinnex-single-cell-RNA/DATA-MAS-SQ2-PBMC_5kcells/4-SeuratMatrix/NoNovelGenesIsoforms/isoforms_seurat/matrix.mtx"
+)
+
+# Destination directories (CHANGE THESE TO YORU DESIRED DESTINATION ON YOUR MACHINE)
+destination_dir_genes <- "path_to_your_destination_directory/genes_seurat"
+destination_dir_isoforms <- "path_to_your_destination_directory/isoforms_seurat"
+
+# Create the directories if they don't exist
+if (!dir.exists(destination_dir_genes)) {
+  dir.create(destination_dir_genes, recursive = TRUE)
+}
+
+if (!dir.exists(destination_dir_isoforms)) {
+  dir.create(destination_dir_isoforms, recursive = TRUE)
+}
+
+# Function to download files
+download_files <- function(urls, destination_dir) {
+  for (url in urls) {
+    filename <- basename(url)
+    download.file(url, destfile = file.path(destination_dir, filename), mode = "wb")
+  }
+}
+
+# Download files for genes and isoforms
+download_files(genes_urls, destination_dir_genes)
+download_files(isoforms_urls, destination_dir_isoforms)
+
+
+# Read downloaded files and create Seurat objects
+gene_matrix <- Read10X(data.dir = destination_dir_genes)
+iso_matrix <- Read10X(data.dir = destination_dir_isoforms)
+```
+
+## Step 2: Creating a Seurat object 
+
+* **Tip**: You have done this before in the "Hands on: Seurat data analysis (10X Genomics))" session!*
+
+**To do:** Complete code line 93 using the `CreateSeuratObject()` function to generate your object. You must use the gene data as your 'counts =' matrix and assign "scRNAseq_adv_2024" as your 'project' name. 
+
+```{r Create Seurat Object} 
+# Create Seurat Object
+seurat_object <- CreateSeuratObject(---, project = "scRNAseq_pacbio_2024")
+
+# If this has worked, when running seurat_object you should see this message pop up along with some more information. 
+
+seurat_object
+```
+
+## Step 3: Merging the gene- and isoform-level data as assays in your Seurat Object.
+
+So far, you have only used the *gene-level* matrix to generate your object. Before we merge the isoform matrix data to our object, let's first prepare the meta-data with existing information.
+
+**To do:** On line 107, complete the 'head(x)' function, returning the first 5 lines of your existing Seurat object meta-data. This should include 'orig.ident', 'nCount_RNA' and 'nFeature_RNA'.
+
+```{r Visualise metadata, warning = FALSE}
+head()
+```
+* **Tip**: Remember the @ operator can be used to access the meta-data slot of your Seurat object.*
+
+**To do:** Next, store the cell barcodes for all cells into a meta-data metric called "barcode". This can be useful downstream to ensure the IDs between gene- and isoform-level data are matched across datasets.
+
+```{r Store barcode IDs in metadata, warning = FALSE}
+# Copy colnames (cell barcodes) to a meta-data column called "barcode".
+seurat_object[["barcode"]] <- colnames(seurat_object)
+```
+
+**To do:** Finally, using `CreateAssayObject` create a second assay called "iso" within your Seurat object to append your isoform-level data. 
+
+*Run chunk as is*
+```{r Add isoform data to a new assay within the Seurat object}
+# Complete the below function, using the iso_matrix data as the 'counts =' data for the "iso" assay in your Seurat object:
+seurat_object[["iso"]] <- CreateAssayObject(counts = iso_matrix)
+
+# You should now have two assays 
+seurat_object
+```
+
+```{r Switching between assays} 
+# It will be important to remember these functions for the remainder of the tutorial. These allow you to switch between the data assays throughout your analyses.
+
+# To set your seurat object onto iso assay and view 
+DefaultAssay(seurat_object) <- 'iso'
+GetAssay(seurat_object)
+
+# To set to RNA assay and view 
+DefaultAssay(seurat_object) <- 'RNA'
+GetAssay(seurat_object)
+```
+
+## Step 4: Quality control (QC)
+
+Seurat allows you to easily explore QC metrics and filter cells. For this tutorial we will focus on the number of unique genes detected and the total number of molecules detected per cell. 
+
+**To do:** Study the number of genes and isoforms captured in your dataset, and the data range obtained.
+
+* **Tip** Remember the mean() and range() functions from Day 2, and the $ operator to specify columns in @meta.data. Note: Now you have nCount and nFeature for your RNA assay (e.g nCount_RNA), AND iso assay (e.g. nCount_iso)*
+
+```{r Number of genes and isoforms captured in your dataset pre subset}
+# Study *counts* 
+mean()  # Fill here
+range() # Fill here
+
+# Study *features* at the RNA vs Isoform level by completing the below functions
+
+mean(---@---$nFeature_RNA) # Fill here
+mean(---@---$nFeature_RNA) # Fill here
+```
+
+**To do:** Use the `VlnPlot()` function to visualise these metrics we will use Violin plots.
+
+```{r Visualise QC metrics, warning=FALSE}
+# Complete the`VlnPlot` function to view the features 'nCount_RNA', 'nCount_iso' etc...
+VlnPlot(seurat_object, features = c("nCount_RNA", "nCount_iso", "nFeature_RNA", "nFeature_iso"), ncol = 4)
+```
+
+>**Question**: What do you immediately notice about your dataset? How do gene vs isoform data compare?
+
+## Step 5: Data subsetting 
+
+#### Determining Cutoffs
+Thinking back to Day 2, remember: (1) Low-quality cells or empty droplets will often have very few genes
+and (2) Cell doublets or multiplets may exhibit an aberrantly high gene count and (3) Counts and features detected generally follow a positive correlation.
+
+On day 2, we discussed how to manually determine cut-offs - let's go through another popular approach based on data percentiles. This is a data driven approach popular for larger data-sets, or if clear cut-off points are difficult to distinguish visually. Here we use specific percentile values (10% and 99%) used for filtering, which can be adjusted based on your dataset and analysis goals.
+
+* **Tip** This can be a great approach to quickly subset your data and standardise your QC filtering across experiments. However, as with any approach, note this strategy should be used with caution! Especially in cases of high discrepancy between samples (ie. one run captured fewer cells than the other, leading to a large difference in the number of genes between your runs) or poor quality experiments (where the n of features and counts correlate poorly).*
+
+**To do:** First, calculate value that separates the bottom 10% of cells with the lowest number of expressed features, and the value that separates the top 1% of cells with the highest number of expressed features, assigning these as your lower and upper boundaries. 
+
+```{r Calculating percentile cutoffs}
+# This line calculates the 10th percentile of the number of expressed features (genes) per cell 
+LB <- quantile(seurat_object[["nFeature_RNA"]]$nFeature_RNA, probs = 0.10)
+
+# This line calculates the 99th percentile of the number of expressed features per cell 
+UB <- quantile(seurat_object[["nFeature_RNA"]]$nFeature_RNA, probs = 0.99)
+```
+
+>**Question**: What are your lower boundary and upper boundary values? Would you have determined different cut-offs manually? Are you happy to use these values?
+
+**To do:** (5.2) Now we use the < and > operators to only retain data that meet our lower and upper cut offs.
+```{r Subsetting}
+# This line creates a new Seurat object, seurat_subset, by subsetting the original object. Only cells with a number of expressed features (nFeature_RNA) that fall between LB and UB are retained in the subset.
+
+seurat_subset <- seurat_object[, seurat_object[["nFeature_RNA"]] > LB & seurat_object[["nFeature_RNA"]] < UB]
+
+seurat_subset
+```
+Compared to the original sample size of 3966 cells, using this subsetting criteria...
+>**Question**: How many cells did you subset out of your dataset? = 
+
+```{r Confirm seurat object for downstream analysis}
+# Once you are happy to proceed, you can over-write your original seurat object
+seurat_object <-  seurat_subset
+
+# If you want, you can remove the second object to free up your environment of unnecessary memory
+rm(seurat_subset)
+```
+
+# Gene level analysis
+In this section, we perform clustering analysis on the gene counts matrix. In general this section follows the generic Seurat clustering workflow.
+
+```{r Set RNA assay}
+# Let's make sure the Default Assay is set to RNA
+DefaultAssay(seurat_object) <- 'RNA'
+```
+
+## Step 6: Normalisation 
+
+```{r Normalise}
+# Complete and run the NormaliseData function to LogNormalise your seurat_object by a scale factor of 10000
+seurat_object <- NormalizeData()
+```
+
+* **Tip**: Remember the `?`  feature is a really useful tool to find out what inputs a function requires, information about the function will appear on the 'Help' tab to your right.*
+
+## Step 7: Identification of highly variable features (feature selection)
+
+```{r Variable Feature Identification}
+# Complete the and run `FindVariableFeatures()` function to find the top 2000 variable features in the seurat_object 
+seurat_object <- FindVariableFeatures()
+```
+
+```{r VariableFeaturePlot function}
+# Can you generate a variable feature plot below? Then, can you go one step further by labeling the top 5 data points?
+top5 <- head()
+top5
+
+var_feat_plot <- VariableFeaturePlot()
+var_feat_plot
+
+var_feat_plot_labeled <- LabelPoints(plot = ---, points = ---, repel = TRUE)
+var_feat_plot_labeled
+```
+
+* **Tip**: This is a three-step process. *1* Create a list of the top 5 variable features *2* Generate the Variable Feature Plot *3* Label the top 10 data points. Use day 2 to remind yourself if necessary.*
+
+## Step 8: Scaling 
+
+This step gives equal weight in downstream analyses, so that the most highly-expressed genes do not dominate the rest of the analysis.
+
+**To do:** `ScaleData()` by all genes in Seurat object *RNA* assay. 
+```{r Scaling}
+# Extract names of all genes
+all_genes <- rownames(seurat_object)
+
+# Complete and run the ScaleData() function below
+
+seurat_object <- ScaleData()
+```
+
+## Step 9: PCA on *RNA* assay
+
+**To do:** Run PCA on your Seurat object using the below command. 
+```{r PCA}
+# We are performing PCA on the RNA assay, we can designate a name to this data reduction called 'pca'.  
+seurat_object <- RunPCA(seurat_object, features = VariableFeatures(object = seurat_object), reduction.name = 'pca')
+```
+
+After running this you should see that you have `1 dimensional reduction calculated:` when looking at your seurat_object.
+
+>**Question**: Determine a cut off point of the number of PCs that represents a robust compression of the dataset. Can you remember what visualisation function is useful for this?
+
+```{r}
+ElbowPlot()
+```
+
+
+## Step 10: Clustering on *RNA* assay
+
+### Find Neighbours
+
+Using the results from the PCA section, set the number of dimensions for the `FindNeighbours()` function 
+
+```{r Neighbours, message=FALSE}
+# Complete and run FindNeighbors() on the `pca_RNA` dim reduction
+seurat_object <- FindNeighbors()
+```
+
+### Find Gene Level Clusters
+
+Don't forget the `FindClusters()` function contains a parameter called resolution which sets the ‘granularity’ of the clustering.
+
+```{r Clusters, message=FALSE}
+# Complete and run FindClusters()
+seurat_object <- FindClusters()
+
+# Save this result to a new meta data column called "gene_level_clusters)
+seurat_object@meta.data$gene_level_clusters <-  seurat_object@meta.data$seurat_clusters
+```
+
+>**Question:** Try running `FindClusters()` at different resolutions by changing the value of `resolution`, how does changing the resolution affect the function?
+
+### Run non-linear dimensional reduction (UMAP)
+
+* **Tip**: As input to the UMAP use the same number of PCs as input to the clustering analysis i.e. during `FindNeighbors()`*
+
+```{r UMAP, message=FALSE, warning=FALSE}
+# Complete and run RunUMAP() and designate this reduction `umap_RNA` 
+seurat_object <- RunUMAP(seurat_object, 1:10, reduction.name = 'umap_RNA')
+```
+**To do:** Generate and save the following 3 plots for reference later: PCA, UMAP and FeaturePlot of RNA counts 
+
+```{r Visualise clusters}
+RNA_PCA <- DimPlot(seurat_object, reduction = 'pca') 
+RNA_UMAP <- DimPlot(seurat_object, reduction = 'umap_RNA')
+RNA_Counts <- FeaturePlot(seurat_object, features='nCount_RNA', reduction='umap_RNA', order=TRUE)
+
+# This is a way to show the three plots side by side
+RNA_PCA | RNA_UMAP | RNA_Counts
+```
+
+# Isoform level analysis
+In this section, we perform Seurat clustering analysis on the isoform counts matrix.
+
+### Isoform-level normalisation, variable feature selection, data scaling and PCA reduction
+
+```{r Switch to isoform assay}
+# Let's first make sure the Default Assay is set to iso!
+
+DefaultAssay(seurat_object) <- 'iso'
+```
+
+```{r Norm VarFeat Scale and PCA for iso assay, message=FALSE}
+seurat_object <- seurat_object %>%
+  NormalizeData() %>%
+  FindVariableFeatures() %>%
+  ScaleData() %>%
+  RunPCA(reduction.name = 'pca_iso')
+```
+* **Note**: To save us time here we performed the equivalent to steps 6-9 for the iso assay in a single function by utilizing the pipe operator!* 
+
+### Isoform level clustering
+```{r Clustering}
+seurat_object <- FindNeighbors(seurat_object, reduction = 'pca_iso', dims = 1:10)
+seurat_object <- FindClusters(seurat_object, resolution = 0.5)
+
+# Save new (isoform level) Seurat clusters to a new meta data column called iso_level_clusters
+seurat_object@meta.data$iso_level_clusters <-  seurat_object@meta.data$seurat_clusters
+```
+
+```{r UMAP, warning=FALSE}
+seurat_object <- RunUMAP(seurat_object, dims = 1:10, reduction.name = 'umap_iso', reduction = 'pca_iso')
+```
+
+```{r Isoform level visualisation}
+Iso_PCA <- DimPlot(seurat_object, reduction = 'pca_iso') 
+Iso_UMAP <- DimPlot(seurat_object, reduction = 'umap_iso')
+
+# Let's compare the UMAP projection of data between gene vs isoform level
+RNA_UMAP | Iso_UMAP 
+```
+
+```{r Gene vs isoform level clustering}
+# Plot the same UMAP labelled by isoform clusters vs gene clusters side-by-side
+DimPlot(seurat_object, reduction = 'umap_iso', group.by = "iso_level_clusters") |
+DimPlot(seurat_object, reduction = 'umap_iso', group.by = "gene_level_clusters")
+```
+>**Question:** What differences do you see with clustering based on gene vs isoform level data? 
+
+Finally, we can save the output. This will save everything analysis (not the plots however) to an object that you can share with others or reload yourself the next time you would like inspect this data.
+
+```{r, eval=FALSE}
+saveRDS(seurat_object, file = 'ei_LongRead_seurat_workflow_analysis.rds')
+```
+

@@ -1,0 +1,363 @@
+---
+title: "scRNAseq_trajectory_analysis"
+author: "DJWright"
+date: "2024-11-08"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Step 0: Trajectory analysis hands-on session setup
+
+This Rmarkdown script utilises a worked example from Monocle3 development team, accessible here: 
+
+http://cole-trapnell-lab.github.io/monocle-release/tutorial_data/Paul_blood_dataset_monocle3.html
+
+Please see the link for further information about Monocle3 or the example data we are working with. 
+
+```{r}
+# Check R is clear & install required packages for tutorial
+rm(list = ls()) 
+
+# if Monocle3 isn't already installed, run the line below, otherwise skip
+#if (!requireNamespace("BiocManager", quietly = TRUE))
+#install.packages("BiocManager")
+#BiocManager::install(version = "3.20")
+#BiocManager::install(c('BiocGenerics', 'DelayedArray', 'DelayedMatrixStats',
+#                       'limma', 'lme4', 'S4Vectors', 'SingleCellExperiment',
+#                       'SummarizedExperiment', 'batchelor', 'HDF5Array',
+#                       'terra', 'ggrastr'))
+#devtools::install_github('cole-trapnell-lab/monocle3')
+
+# load the required package(s)
+library(rmarkdown)
+library(igraph)
+library(monocle3)
+```
+
+For the purposes of this session, let's alter R to allow us to see what Monocle is doing...(you don't need to worry about this part usually)
+
+```{r}
+# To allow us to see some output for Monocle3 operations
+DelayedArray:::set_verbose_block_processing(TRUE)
+
+# Passing a higher value will make some computations faster but use more memory. Caution needed if adjusting this value.
+options(DelayedArray.block.size=1000e6)
+```
+
+## Step 1: Importing data
+
+Let's import the data. We are using the Monocle3 example data from the developer team. This comprises a subset of neuronal cells in C. elegans during embryogenesis from an experiment by Packer et al (2019): https://www.science.org/doi/10.1126/science.aax1971. This can be accessed at the following link;
+
+https://depts.washington.edu:/trapnell-lab/software/monocle3/celegans/data/
+
+We are using an existing example and so are importing R data objects that already exist, hence here we use readRDS(). Normally you would be importing your own novel data and would be reading directly from 10X cell ranger output etc (see below)
+
+NOTE: If your VM has internet access, you can run IMPORT CODE 1 (unhashed) to download and import the data directly from the source. If, during the course, your internet access doesn't work correctly, you can run IMPORT CODE 2, which loads a version of the online data that has already been downloaded to the VM for you (just hash out import code 1 and unhash import code 2 before running the code block). Either method will enable you to import the 3 data sets and create the CDS.
+
+```{r}
+### IMPORT CODE 1 (used to import if your VM has internet, or you are running this script after the course)
+## import expression matrix
+expression_matrix <- readRDS(url("https://depts.washington.edu:/trapnell-lab/software/monocle3/celegans/data/packer_embryo_expression.rds"))
+## import cell metadata
+cell_metadata <- readRDS(url("https://depts.washington.edu:/trapnell-lab/software/monocle3/celegans/data/packer_embryo_colData.rds"))
+## import gene metadata
+gene_annotation <- readRDS(url("https://depts.washington.edu:/trapnell-lab/software/monocle3/celegans/data/packer_embryo_rowData.rds"))
+
+### IMPORT CODE 2 (used during course if your VM internet access is not working correctly)
+## import expression matrix
+#expression_matrix <- readRDS("/home/scRNAseq_adv_2023/day_3_am_monocle/data/packer_embryo_expression.rds")
+## import cell metadata
+#cell_metadata <- readRDS("/home/scRNAseq_adv_2023/day_3_am_monocle/data/packer_embryo_colData.rds")
+## import gene metadata
+#gene_annotation <- readRDS("/home/scRNAseq_adv_2023/day_3_am_monocle/data/packer_embryo_rowData.rds")
+
+### RUN THIS REGARDLESS OF WHICH IMPORT METHOD YOU USE. THIS CREATES THE CDS OBJECT
+# Make the CDS object using Monocle3's "new_cell_data_set" function
+cds <- new_cell_data_set(expression_matrix,
+                         cell_metadata = cell_metadata,
+                         gene_metadata = gene_annotation)
+head(cds)
+```
+
+You can read-in your own 10X data (i.e. from CellRanger) directly into Monocle3 in a couple of different ways:
+
+```{r}
+## Provide the path to the Cell Ranger output and use the "load_cellranger_data" function
+#cds <- load_cellranger_data("~/path/to/10x_data")
+
+## Or use MatrixMarket and point it to your 3 CellRanger output files like so;
+#cds <- load_mm_data(mat_path = "~/path/to/10x_data/matrix.mtx", feature_anno_path = "~/path/to/10x_data/features.tsv", cell_anno_path = "~/path/to/10x_data/barcodes.tsv")
+```
+
+## Step 2: Preprocessing the data
+
+We need to process our samples, just like Seurat or any other analysis pipeline, ensuring that we normalise our counts, account for batch effects and reduce dimensionality for easier downstream processing and visualisation. Monocle3 has a handy function preprocess_cds() for this purpose. See slides for more details. Here we perform a PCA (default setting, and we asked for 50 PCs) and it also log-normalises our counts as default (see slides or https://rdrr.io/github/cole-trapnell-lab/monocle3/man/preprocess_cds.html for full details)
+
+```{r}
+cds <- preprocess_cds(cds, num_dim = 50, method = 'PCA')
+```
+
+We can check our PCs are capturing the variance nicely like in Seurat, only here we use the function plot_pc_variance_explained()
+
+```{r}
+plot_pc_variance_explained(cds)
+```
+
+Here, we also account for batch effects specific to Packer et al's experiment (using their batch details,  denoted as loadings in the cell_metadata input file). These loadings give a background signal of contamination of supernatant RNA for each cell. This supernatant contamination occurs due to spontaneous cell lysis immediately prior to single cell library preparation.
+
+```{r}
+cds <- align_cds(cds, alignment_group = "batch", residual_model_formula_str = "~ bg.300.loading + bg.400.loading + bg.500.1.loading + bg.500.2.loading + bg.r17.loading + bg.b01.loading + bg.b02.loading")
+```
+
+## Step 3: Further dimensionality reduction & visualisation (UMAP)
+
+Here, just as with Seurat or any other standard single cell clustering analysis, further reduce the dimensions of our PCA-treated data and then embed them in a graph for visualisation, using either tSNE or UMAP. The authors of Monocle3 strongly advise the use of UMAP. Reduce_dimension() will apply the UMAP reduction and plot_cells() will show it to us.
+
+reduce_dimension() uses UMAP as default, but is capable of most other reduction techniques we have discussed: reduction_method = c("UMAP", "tSNE", "PCA", "LSI", "Aligned"). See R function help for full details. 
+
+Note this plotting gives us a normal UMAP, it does NOT give us a trajectory yet, since we haven't ask it to learn the trajectory or trajectories in our data. 
+
+```{r}
+cds <- reduce_dimension(cds, reduction_method = "UMAP")
+plot_cells(cds, label_groups_by_cluster=FALSE,  color_cells_by = "cell.type")
+```
+
+This figure is a regular UMAP graph of our cells, where Monocle3 has reconstructed what looks like a trajectory with lots of branches. *NOTE*: At this stage, we have not yet applied the trajectory-learning algorithm. In fact, you may get an error when running this code suggesting that it cannot find the graph information to plot. 
+
+Is is easy to start inferring how the cell types are related and how they diverge in this example because we have labelled our cells by their known cell type ID and we can see most branches of the trajectory generally comprise a single cell type. However, we might not have this information (just like we didn't in our Seurat workflow in the previous session), so we're jumping ahead a little here, but it is useful to be able to see that quite quickly we can see a trajectory analysis begin to take shape.
+
+We can further pull apart specific gene expression in specific cell types as below (again, we are fortunate in this example as we know our cell types and their marker genes!). This is just to show you some ways Monocle3 can help with visualising your data:
+
+```{r}
+ciliated_genes <- c("che-1",
+                    "hlh-17",
+                    "nhr-6",
+                    "dmd-6",
+                    "ceh-36",
+                    "ham-1") # this gene list comes from knowing the biology of our system...
+
+# plot our cells, highlighting our ciliated genes
+plot_cells(cds,genes=ciliated_genes, label_cell_groups=FALSE, show_trajectory_graph=FALSE)
+```
+
+## Step 4: Clustering 
+
+We mentioned in the lecture slides that trajectory analysis is all about continual scales of change ie dynamic processes, rather than discreet clusters of cells with clearly defined boundaries. However, that doesn't mean that all cells diverge from the same transcriptional 'ancestor' or origin. Indeed in the UMAP we just made, we can see entirely separate groups of cells in the plot, disconnected from the main branching pattern. We therefore use Monocle3 to perform a clustering step to identify these separate dynamic processes. In fact, these clusters are actually used as partitions when learning the trajectory graph, meaning that each separate cluster or partition of cells will have it's own trajectory learnt and plotted. This links nicely back to the slides where we talk about "disconnected graphs". It is a relatively new feature (older versions of Monocle would just force everything into a single trajectory graph incorrectly). 
+
+To cluster our cells we just use cluster_cells(). *Note* In our Seurat session, we spoke about Louvain vs Leiden clustering. Monocle3 uses LEIDEN as default (you can change the clustering method with cluster_method="louvain" if you wish). See cluster_cells() help for full options.  
+
+```{r}
+cds <- cluster_cells(cds)
+# plot our cells, this time label by partition/cluster 
+plot_cells(cds, color_cells_by = "partition") # partition data is provided/added to cds by the clustering function
+
+# extract partition factors if needed
+partitions_factors <- partitions(cds, "UMAP")
+# extract cluster factors if needed
+cluster_factors <- clusters(cds, "UMAP")
+```
+
+*TASK* Visualise a UMAP of the cells by their clusters. How does this compare with partitions? 
+
+## Step 5: Learning the Trajectory graph
+
+This is the main event! We will now learn a principal graph for each partition (cluster) that we just identified. By default Monocle3 applies an approximate nearest neighbour ML algorithm (ANNOY), but again see the full function help() for options, particularly the "learn_graph_control" parameters information. There are lots of options to familiarise yourself with - particularly whether you are using RANN, ANNOY or HNSW approaches to the nearest-neighbour learning.  
+
+```{r}
+cds <- learn_graph(cds, use_partition = TRUE, verbose = TRUE) # remember the default uses ANNOY with euclidean distance metric
+
+# plot our cells, this time label by cell type 
+plot_cells(cds,
+           color_cells_by = "cell.type",
+           label_groups_by_cluster=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE)
+```
+
+## Step 6: Pseudotime - ordering our cells along trajectories
+
+Question number 1...where is the start of our trajectory?! This is NOT a trivial problem! See lecture slides. Two main approaches: a) have some biological understanding of your system and manually select the earliest cell states in your system or b) have some biological understanding of your system and write a clever little function to select the start point for you. Either way YOU NEED TO KNOW THE BIOLOGY OF YOUR SYSTEM.
+
+Let's assess where our earliest cells are by overlaying the embryo-stage metadata we have for our experiment;
+
+```{r}
+# assess our psuedotime start points by overlaying the embryo-stage in our experiment metadata
+plot_cells(cds,
+           color_cells_by = "embryo.time.bin",
+           label_cell_groups=FALSE,
+           label_leaves=TRUE,
+           label_roots = TRUE,
+           label_branch_points=TRUE,
+           graph_label_size=1.5,
+           cell_size = 0.35)
+```
+
+*TIP* Play around with the plot parameters - try removing the leaf labels, branch point labels and changing the size of the graph labels. What happens if you add the parameter "label_roots = TRUE" to the above plot call?  
+
+Note the COLOUR is the important thing here...the numbers in the circles are not a proxy for pseudotime. They are simply labelling the various branching points in the tree structure (black cirlces; label_branch_points) and cell fates (grey circles; label_leaves) for easy identification (you'll notice each number only appears once in black and once in grey)
+
+Now we select our start point as part of the order_cells() function. We provide principal points/nodes names, or cells IDs to act as the root for our trajectory (i.e pseudotime = 0) OR we use a graphical interface to manually select from an image if these details aren't provided in the function call. 
+
+1) Let's get root principal node(s) names by showing the names on a plot with "label_principal_points = TRUE;
+
+```{r}
+# assess our psuedotime start points by overlaying the embryo-stage in our experiment metadata
+plot_cells(cds,
+           color_cells_by = "embryo.time.bin",
+           label_cell_groups=FALSE,
+           label_leaves=TRUE,
+           label_branch_points=TRUE,
+           label_principal_points = TRUE, # this gives us principal nodes names to feed to root_pr_nodes in order_cells()
+           graph_label_size=1.5)
+```
+
+now we select our principal node and give it to sort_cells()
+
+```{r}
+# order cells by pseudotime, by providing a principal node name to use as the root
+cds <- order_cells(cds, root_pr_nodes = 'Y_48') # this might differ depending on your project, tranjectory graph + bio inference
+
+# plot the trajectory with cells colours by pseudotime ordering
+plot_cells(cds,
+           color_cells_by = "pseudotime",
+           label_cell_groups=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           graph_label_size=1.5)
+```
+
+*TIP* Look carefully at the colours on your plot. What do you notice about some of the cells.... why might this be? 
+
+*TASK* Try finding a principal root node name for each partition on your trajectory plot, then rerun the plot so that all cells are assigned a pseudotime value for their specific trajectory
+
+```{r}
+# order cells by pseudotime, by providing a prncipal node names to use as the root
+cds <- order_cells(cds, root_pr_nodes = c('Y_48','Y_284','Y_245','Y_213'))
+
+# plot the trajectory with cells colours by pseudotime ordering
+plot_cells(cds,
+           color_cells_by = "pseudotime",
+           label_cell_groups=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           graph_label_size=1.5)
+```
+
+2) Let's try manually selecting a root live from a graph. Simply do not feed any root info to order_cells(). A popup will appear in RStudio in which you can use a mouse to select the point(s) you want as nodes.
+
+```{r}
+# generate a live plot for manual selection of root nodes
+cds <- order_cells(cds)
+# plot the trajectory with cells colours by pseudotime ordering
+plot_cells(cds,
+           color_cells_by = "pseudotime",
+           label_cell_groups=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           graph_label_size=1.5)
+```
+
+*TASK* play around with the manual root selector - what do you notice about the pseudotime ordering? A good example of rubbish-in-rubbish-out... it is very important we think about a biological justification for our choice!
+
+3) Using automated selection of the best root(s). The Monocle3 authors generously also provide a handy example of utilising a homemade function to select our root node, by; "first grouping the cells according to which trajectory graph node they are nearest to. Then, it calculates what fraction of the cells at each node come from the earliest time point. Then it picks the node that is most heavily occupied by early cells and returns that as the root." Do not worry if the syntax for this is unfamiliar, it is nothing to do with Monocle3 or single-cell stuff, and is just an example of writing generic functions in R. 
+
+```{r}
+# a helper function to identify the root principal points:
+get_earliest_principal_node <- function(cds, time_bin="130-170"){
+  cell_ids <- which(colData(cds)[, "embryo.time.bin"] == time_bin)
+  closest_vertex <-
+  cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds), ])
+  root_pr_nodes <-
+  igraph::V(principal_graph(cds)[["UMAP"]])$name[as.numeric(names
+  (which.max(table(closest_vertex[cell_ids,]))))]
+  
+  root_pr_nodes
+}
+
+# run it like this
+cds <- order_cells(cds, root_pr_nodes=get_earliest_principal_node(cds))
+```
+
+*Note* What do you notice about the automated root selection? Are all partitions in your UMAP correctly ordered and assigned pseudotime? 
+
+One option we could try to make it run for all partitions in your data might be to first filter by partition, see how many you have, then run the helper for each one;
+
+
+
+```{r}
+# how many partitions (you can see from your plot, but good to check!)
+levels(partitions(cds, "UMAP"))
+
+# modify the helper function to identify the root principal points for a specified partition:
+get_earliest_principal_node <- function(cds,partition,time_bin){
+  cell_ids <- which(partitions(cds, "UMAP") == partition & colData(cds)[, "embryo.time.bin"] == time_bin)
+  closest_vertex <-
+  cds@principal_graph_aux[["UMAP"]]$pr_graph_cell_proj_closest_vertex
+  closest_vertex <- as.matrix(closest_vertex[colnames(cds), ])
+  root_pr_nodes <-
+  igraph::V(principal_graph(cds)[["UMAP"]])$name[as.numeric(names
+  (which.max(table(closest_vertex[cell_ids,]))))]
+  
+  root_pr_nodes
+}
+
+# run it like this, calling the modified function for each partition in turn. There will be more straightforward ways to do it for sure, but this way works...
+cds <- order_cells(cds, root_pr_nodes=c(get_earliest_principal_node(cds,"1", "130-170"), get_earliest_principal_node(cds,"2", "330-390"), get_earliest_principal_node(cds, "3","270-330"), get_earliest_principal_node(cds, "4","390-450")))
+
+plot_cells(cds,
+           color_cells_by = "pseudotime",
+           label_cell_groups=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE,
+           graph_label_size=1.5)
+```
+
+## Step 7: Subsetting your trajectory for downstream analysis  
+
+You may require to focus your downstream analyses on subset or parts of a trajectory. It is quite straightforward to extract the parts you require. Use the function "choose_graph_segments()". As with the node selection for the pseudotime, we can either call the function without specifying options in order to call an interactive image and select parts of a trajectory... or we can specify start and end nodes of interest directly in the function call if we know them (from earlier labelling of the nodes with names/numbers). See slides and function help for full details. 
+*NOTE*: By default we clear all slots within the CDS object... meaning our subsetted chunks of data longer have any preprocessing, clustering, trajectory info etc. The idea is that you would be subsetting to obtain a smaller dataset that you then run everything on again...
+ 
+```{r}
+# select parts of a trajectory 
+cds_sub <- choose_graph_segments(cds)
+
+```
+
+*TASK* Try selecting different parts of the trajectory. Have a look at the different outputs you obtain in cds_sub (or whatever you call subsequent selections). Can you see how it is subsetting the dataframes? 
+
+*BONUS* We can also subset our trajectory by more freely selecting cells using the choose_cells() function. Again this provides us an interactive drag+select image in which we are able to draw a box around the cells we want to include in our subset. Note the difference here is that by default we KEEP the CDS slots in our subset... making this a useful feature for downstream differential expression analysis (see next practical session on Differential Expression for details).
+
+```{r}
+# call cells by selecting with click & drag
+cds_cell_sub <- choose_cells(cds) # note defaul maintains CDS slot / processing...
+```
+
+*TASK* Try selecting different parts of the trajectory with this method.
+
+## Step 8: Saving & Loading Monocle3 objects
+
+Due to data structures used by Monocle3, default R RDS object manipulation doesn't work well here. Instead Monocle3's authors have provided save and load functions, used accordingly; 
+
+SAVING
+
+```{r}
+# save a monocle3 CDS object. Edit to your specific saving directory before running!
+save_monocle_objects(cds=cds, directory_path='/Users/dwright/Documents/Teaching/scRNAseq_course', comment='This is my cds. Stored 2024-11-12.')
+```
+
+LOADING
+
+```{r}
+# Load an existing CDS by assigning to a new object, as per usual R procedure! 
+cds_presaved <- load_monocle_objects(directory_path='path/to/my/files/cds_objects')
+```
+
+*TASK* Edit the paths and save and load your CDS object as a new CDS.
+
+## NEXT STEPS
+
+*TASK* If you have time and wish to further explore trajectory analysis, feel free to try running the entire pipeline on your own data, or on available test data, such as publicly available 10X (e.g. https://www.10xgenomics.com/resources/datasets)
+
+In our next session (Differential Expression Roundup) we will spend some time looking at what sorts of downstream analyses we can do with Trajectory Analysis. Once we have our trajectory learnt, it allows us to answer questions around gene dynamics, uncover new biology about cellular dynamic processes and feed into other analyses in integrated experimental designs. 

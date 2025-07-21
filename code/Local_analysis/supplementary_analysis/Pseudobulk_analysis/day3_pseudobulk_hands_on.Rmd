@@ -1,0 +1,112 @@
+---
+title: "day3_pseudobulk_hands_on"
+author: "Anita Scoones"
+date: "2024-11-02"
+output: html_document
+---
+
+# Pseudo-bulk workflow -----------------
+
+In this tutorial, you will learn how to prepare your Seurat object data by aggregating expression from your single cell data, first at the sample level and then by experimental condition. This data preparation is essential for differential expression analysis using packages such as edgeR or DESeq2.
+
+This tutorial assumes you have processed your single cell data up to the point of cluster identification.
+
+# 1. Load packages and your data and extract counts matrix 
+
+```{r Packages}
+library(Seurat)
+library(dplyr)
+```
+
+```{r Integrated Seurat Object}
+# Example loading command
+sobj <- readRDS("path/to/saved/seurat/object.rds")
+```
+
+# 2: Defining Grouping Variables
+
+To perform differential expression analysis, you need to aggregate data by the grouping variables you wish to compare, which is dependent on your experimental question. 
+
+•	For example, if you have biological replicates (e.g. multiple mice per condition) you may want to aggregate based on sample and experimental condition (ie. treated vs untreated). 
+•	You may also be interested in comparing expression across conditions at the cluster level (ie. test for differential expression within the same cell types across treated vs. untreated). 
+
+# To start, ensure that your Seurat object contains metadata with the variables you wish to aggregate by (spoiler alert, it doesn't). 
+
+```{r View metadata}
+# Check your metadata - here are two ways to do this:
+
+view(sobj@meta.data) #opens entire file in new tab
+
+head(sobj@meta.data) #prints first rows
+```
+
+### *Question? Do we have a metadata column that identifies both condition and patient ID for every cell?*
+
+# 3. Acquiring necessary grouping variable for aggregating cells
+
+A: Aggregate Expression by condition and patient ID
+
+	•	Sample-level Aggregation: The sample-level matrix represents average expression per gene for each sample, useful for controlling for individual variation in downstream differential expression analysis.
+
+```{r Create a new column in meta data to combine these grouping variables, call this "condition_patient"}
+sobj@meta.data$condition_patient <- paste(sobj$condition, sobj$patient, sep = '_') 
+
+# Here, we have used the paste0() base function to concatenate strings within the data frame into our new grouping variable column - verify output
+
+head(sobj@meta.data) 
+table(sobj$condition, sobj$condition_patient)
+```
+
+Using the AggregateExpression() function, we can aggregate ("pseudo-bulk") gene expression counts on two levels, using our new grouping variable column. This function will compute the average expression across cells based on the feature we choose to group.by (in this case, our falsified patient and experimental condition).
+
+```{r Sample level aggregation}
+# Aggregate expression at sample level
+patient_aggregated <- AggregateExpression(
+  object = ________,         # Fill in with Seurat object name
+  group.by = "________",     # Fill in with new grouping variable
+  assays = "RNA",
+  slot = "counts"
+)
+
+# Extract these aggregated counts as a matrix
+aggregated_counts_bypatient <- patient_aggregated$RNA 
+```
+
+The result, patient_aggregated, is a list containing the aggregated counts matrix for each patient, across the two conditions. It’s now ready to use for downstream analyses or further aggregation by condition.
+
+# 4: Aggregate Expression by Clusters
+
+	•	Cluster-level Aggregation: This matrix allows you to compare cell types between groups directly, useful for testing differential expression between conditions.
+
+To further prepare for differential expression, you most likely will want to aggregate expression by experimental condition (e.g., control vs. test, untreated vs. treated, time point 1 vs. time point 2 etc). This will give a summary of expression across all samples within each condition group.
+
+```{r}
+# Aggregate expression by cluster level
+cluster_aggregated <- AggregateExpression(
+  object = ----,
+  group.by = c(" ", " "),
+  assays = "RNA",
+  slot = "counts"
+) # FILL IN 2 grouping variables
+
+# Extract these aggregated counts as a matrix
+aggregated_counts_bycluster <- cluster_aggregated$RNA 
+```
+
+The result, cluster_aggregated, is a list containing the aggregated counts matrix for each cluster, across the four patients, from two conditions. It’s now ready to use for downstream analyses or further aggregation by condition.
+
+# Step 5: Prepare the Data for Export
+
+If you intend to use these aggregated data in edgeR or DESeq2, it’s often necessary to format these matrices for compatibility for differential expression analyses. Here are some useful data manipulation commands: 
+
+```{r }
+# Transpose your matrix (ie. swapping over columns (grouping var e.g. "Control-p1"), with rownames (genes))
+counts_t <- t(aggregated_counts_bypatient) 
+
+# Covert transposed matrix to data.frame
+counts_t <- as.data.frame(counts_t)
+
+# Save the data frame as a .csv file for easy import into DESeq2 or edgeR
+write.table(counts_t, "pseudo_bulk_counts_bypatient.tsv", sep = "\t", row.names = TRUE)
+```
+

@@ -1,0 +1,318 @@
+---
+title: "CellType_specific_DE_in_ageing"
+author: "Anita Scoones"
+date: "2023-03-09"
+output: html_document
+---
+
+# Case study example
+
+-   This is a worked example of how one could perform differential expression analyses with edgeR and DESeq2 with single cell RNA-seq data. Here, this script assumes you have performed pre-liminary analyses (e.g. completed the Seurat workflow) with your scRNAseq dataset, but want to now perform differential expression analysis with pseudobulk counts.
+
+### Pre-requisites:
+
+*A seurat object of your analysed single cell data*
+
+-   where [sobj\@meta.data](mailto:sobj@meta.data){.email} contains all of the necessary information you need to perform differential expression tests e.g. condition, sample IDs etc...
+
+### To follow the worked example, here's some background info:
+
+-   This script was used for differential expression analyses of cell types analysed with Seurat.
+-   The experiment was exploring the impact of age on the transcriptional programmes of specific cell populations in the bone-marrow.
+-   This scRNAseq experiment was performed using Smart-seq2.
+-   The sample species was mouse, and there were 3 biological replicates per condition (i.e. 3 OLD, 3 YOUNG).
+
+If you wish to use this script with some of your own data, you will of course have to modify paths / object names / meta data variables etc to the equivalent in your dataset.
+
+```{r}
+# Check R is clear & install required packages for tutorial
+rm(list = ls()) 
+
+# Loading libraries (you may not need all of these)
+library(Seurat)
+library(edgeR)
+library(DESeq2)
+library(dplyr)
+library(tibble)
+library(Seurat)
+library(ggplot2)
+library(EnhancedVolcano)
+```
+
+## Cell-type specific differential expression
+
+### Performing DEA by condition with `FindMarkers`
+
+-   First, let's explore how we might attempt DEA within Seurat:
+
+e.g. Finding DE genes using FindMarkers in one cell type in particular (MkPs)
+
+{Remember to modify object names, paths etc to fit your experiment if re-using this script:
+
+-   In this example, the meta data contains many variables, importantly:
+
+    -   experimental condition ("condition" = "OLD" or "YOUNG")
+
+    <!-- -->
+
+    -   sample ("mouse_id" = "30", "31", "32", "33", "34" or "35")
+
+    -   annotated seurat cluster name ("cell_type" = "HSC", "MkP" etc...)
+
+    }
+
+```{r}
+# Import analysed Seurat object
+sobj <- readRDS(file = '~/path/to/my/analysed/seurat/object.rds')
+
+sobj
+
+# Create separate object containing only cells of interest (e.g. MkP)
+MkP_cells <- subset(sobj, idents = "MkP")
+
+MkP_cells
+
+
+# Set the active identity class to the "condition" column
+Idents(MkP_cells) <- "condition"
+
+# Perform differential expression analysis between two conditions
+MkP_DE_results <- FindMarkers(MkP_cells, ident.1 = "YOUNG", ident.2 = "OLD")
+
+View(MkP_DE_results)
+```
+
+## Performing DEA by condition with 'Pseudobulk' samples
+
+-   Now, let's explore how we might attempt DEA using `AggregateExpression`:
+
+```{r Create an aggregated dataset based on biological sample for each condition}
+
+# (1) Create new metadata column designating each sample both by both condition and sample ID as a single variable
+sobj@meta.data$samples <- paste0(sobj@meta.data$condition, sobj@meta.data$mouse_id)
+
+# (2) Aggregate Expression, grouping counts for each cell type, for each sample
+ageing_obj_edger <- AggregateExpression(sobj, group.by = c("cell_type", "samples"), assays = "RNA", slot = "counts", return.seurat = F)
+```
+
+-   To make our single cell data compatible with DEA tools (designed for bulk data sets) we need to do a little bit of data formatting!
+
+-   The result (agg.split) is a list containing a separate data frame for each cell type, allowing you to analyse or process each cell type individually, while retaining the sample information.
+
+```{r Formatting}
+# (1) Get the counts matrix for the aggregated object - we will analyse our raw counts for DE
+ageing_counts <- ageing_obj_edger$RNA
+
+# (2) Transpose the matrix: Samples = rownames,  genes = col names 
+ageing_counts.t <- t(ageing_counts)
+
+#... make into df
+ageing_counts.t <- as.data.frame(ageing_counts.t)
+
+# (3) Create a vector (splitRows) with the cell type for each row, which will be used to group the data. 
+
+splitRows <- gsub('_.*', '', rownames(ageing_counts.t)) # This removes everything after the first underscore (_) in each row name.
+
+splitRows
+
+# (4) Split the matrix by cell type
+
+agg.split <- split.data.frame(ageing_counts.t,
+                 f = factor(splitRows)) # split data.frame to create a list with counts data for each cell type individually including sample information 
+
+
+# (5) Now our data is in a list, containing aggregated counts per cell type, for each sample. To remove redundancy and simplify analysis downstream I chose to remove 'Cell Type' labels from Row Names. Here I also restructured my data back so samples =  columns and genes = rows (ie. making it compatible with downstream tools e.g. DEseq2 etc)
+
+agg.split.modified <- lapply(agg.split, function(x){
+  rownames(x) <- gsub('.*_(.*)', '\\1', rownames(x))
+  t(x)
+})
+
+```
+
+## Differential expression analysis based on the Negative Binomial (a.k.a. Gamma-Poisson) distribution
+
+-   This distribution is well-suited to RNA-seq data due to its ability to handle \***over-dispersion\***, where the variance exceeds the mean—common in count-based data like RNA sequencing.
+
+    `e.g.` Let's suppose we want to perform DEA for 1 cell type in our data across our conditions, WHILE taking into account biological sample / replicate.
+
+## DESeq2 -------------
+
+```{r Preparing for DEA with DESeq2 - DEGs in MkPs with age}
+
+# 1. Extract data of interest from matrix - aka counts only from MkPs
+counts_MKP <- agg.split.modified$`MkP`
+
+View(counts_MKP)
+
+# 2. Generate sample-level metadata for DEA
+# This metadata will define the variables (conditions) used for DEA.
+
+colData_MKP <- data.frame(samples = colnames(counts_MKP))
+
+View(colData_MKP)
+
+# Add a condition column based on sample naming (identifying 'OLD' vs 'YOUNG' samples)
+
+colData_MKP <- colData_MKP %>%
+  mutate(condition = ifelse(grepl('OLD', samples), 'OLD', 'YOUNG')) %>%
+  column_to_rownames(var = 'samples')
+
+# 3. Create a DESeq2 object
+# With counts and metadata prepared, we create a DESeqDataSet object, which stores input values, intermediate results, and analysis outcomes (similar to seurat object).
+ 
+dds_MKP <- DESeqDataSetFromMatrix(countData = counts_MKP,
+                       colData = colData_MKP,
+                       design = ~ condition)
+
+# 4. Filtering - to retain genes with sufficient read counts
+# This step improves power and accuracy by filtering out genes with low expression.
+
+keep_MKP <- rowSums(counts(dds_MKP)) >=10 # Keep genes with a total count of at least 10 across all samples.
+
+# Subset the DESeq2 object to include only genes that pass the filter
+dds_MKP <- dds_MKP[keep_MKP, ]
+```
+
+## Using the `DESeq` function performs these steps as default:
+
+-   <div>
+
+    1.  Size factor estimation:
+
+        DESeq2 first calculates size factors for each sample. Size factors are calculated based on the median ratio of gene counts in each sample compared to a “pseudoreference” sample, which is derived as the geometric mean of counts for each gene across all samples. This step corrects for differences in library size and sequencing depth, ensuring that count differences across samples are due to biological factors rather than technical variations.
+
+    2.  Dispersion estimation:
+
+        Dispersion estimation occurs after normalization (size factor estimation). In RNA-seq data, dispersion represents the variability of gene expression levels that cannot be explained by differences in sample means alone. Dispersion helps to model the biological variability within each condition (group) so that DESeq2 can accurately test for differential expression between conditions.
+
+    3.  Negative Binomial GLM fitting and statistical testing using Wald test: The final steps in the differential expression analysis pipeline. These steps leverage the previously calculated size factors (for normalization) and dispersion estimates to test for differential expression between conditions.
+
+    ### - A note on Generalized Linear Models (GLM):
+
+    DESeq2 models the count data for each gene using a GLM with a Negative Binomial (NB) distribution. The model fits each gene’s counts as a function of the experimental conditions (e.g., treatment vs. control).
+
+    </div>
+
+## To summarise:
+
+-   For each gene, DESeq2 estimates a mean expression level for each condition and uses the gene-specific dispersion estimate to account for variability within conditions. Then, after fitting the GLM, DESeq2 uses the Wald test to test if the estimated effect size (log2 fold change) for each gene differs significantly from zero.
+
+```{r Running DEseq2 - DEGs in MkPs with age}
+
+# 5. Run DESeq2 to perform DEA on the filtered DESeqDataSet object
+
+dds_MKP_DEseq <- DESeq(dds_MKP)
+
+# Access DESeq analysis results 
+
+resultsNames(dds_MKP_DEseq) # This lists the names of available results within dds_MKP_DEseq
+
+MkP_DESseq_result <- results(dds_MKP_DEseq, name = "condition_YOUNG_vs_OLD") #Extract results for specific comparison
+
+# Convert the DESeq2 results to a data frame for easier manipulation
+MkP_DESseq_result_df <- as.data.frame(MkP_DESseq_result) 
+
+MkP_DESseq_result_df <- MkP_DESseq_result_df %>% mutate(ID=rownames(MkP_DESseq_result_df)) # Add gene IDs as a column
+
+MkP_DESseq_sig <- MkP_DESseq_result_df %>% dplyr::filter(padj<0.05) %>% arrange(-log2FoldChange) # Filter significant results and sort by log2 fold change
+
+top_10 <- rownames(MkP_DESseq_sig)[1:10] #Select top 10 genes
+```
+
+## edgeR------------------------
+
+```{r  Preparing for DEA with edgeR - DEGs in MkPs with age}
+# Define the treatment information (metadata for MKP cells)
+treatment <- colData_MKP
+
+# Transpose the treatment data to match the required input format
+treatment_t <- t(treatment)
+
+# Convert condition information to a factor for edgeR analysis
+age_f <- factor(treatment$condition)
+
+# Create a DGEList object for edgeR with count data and group information 
+y_MKP <- DGEList(counts=counts_MKP, group = c(age_f))
+y_MKP
+
+# Estimate library sizes by summing counts for each sample and updating the DGEList
+
+y_MKP$samples$lib.size <- colSums(y_MKP$counts)
+y_MKP$samples
+
+# Filter out lowly expressed genes that are unlikely to be informative for DE analysis
+
+keep_edgeR_MKP <- filterByExpr(y_MKP)
+
+y_MKP <- y_MKP[keep_edgeR_MKP, , keep.lib.sizes=FALSE] # Apply the filter and reset library sizes
+
+table(keep_edgeR_MKP)  # Show how many genes were kept
+
+# Construct a design matrix to test differential expression by condition (age)
+
+design <- model.matrix(~age_f)
+
+# Estimate dispersions using the design matrix - this quantifies within-group variability (important for DE testing); "robust = TRUE" adds outlier protection 
+
+y_MKP <- estimateDisp(y_MKP, design, robust = TRUE)
+
+# Check the common dispersion value, representing the overall variability in the dataset
+
+y_MKP$common.dispersion
+
+# Plot Biological Coefficient of Variation (BCV) to visualize dispersion estimates across genes
+MKP_bcv <- plotBCV(y_MKP)
+MKP_bcv
+
+# Fit a generalized linear model (GLM) to the data based on the design matrix - Note that glmLRT has conducted a test for the last coefficient in the linear model 
+fit_MKP <- glmFit(y_MKP,design)
+
+# Perform likelihood ratio test for the second coefficient (condition effect)
+
+lrt_MKP <- glmLRT(fit_MKP, coef = 2)
+  
+# Extract top differentially expressed genes, ranked by p-value (adjusted for FDR)
+
+toptags_MKP <- data.frame(topTags(lrt_MKP, adjust.method = "fdr", sort.by = "PValue"))
+
+# Summary of the DE test results, displaying the count of significant genes
+summary(decideTests(lrt_MKP))
+
+# Plot mean-difference (MD) plot showing log fold changes vs. average expression
+plotMD(lrt_MKP)
+
+# Extract and save full DE results (LRT table)
+MKP_LRT_table <- lrt_MKP$table
+
+# Filter significant DE genes (p-value < 0.05) and sort by absolute log fold change
+sig_MKP_table <- MKP_LRT_table %>% dplyr::filter(PValue < 0.05) %>% arrange(desc(abs(logFC)))
+
+# Add gene IDs as a new column for easier identification in downstream analysis
+sig_MKP_table <- sig_MKP_table %>% mutate(ID = rownames(sig_MKP_table))
+
+# saving files for downstream analysis: write.table(MKP_LRT_table, 'edgeR_MKP_LRT_all.tsv')
+# saving files for downstream analysis: write.table(sig_MKP_table, 'edgeR_MKP_sigDEGs.tsv')
+```
+
+### Finally, how may we want to visualize this?
+
+```{r Visualisation}
+# Volcano Plot for DESeq2 results
+EnhancedVolcano(MkP_DESseq_sig, x = "log2FoldChange", y = "pvalue", lab = MkP_DESseq_sig$ID)
+
+# Volcano Plot for edgeR results
+EnhancedVolcano(sig_MKP_table, x = "logFC", y = "PValue", lab = sig_MKP_table$ID)
+
+# You can also always go back to your original seurat object (assuming its still loaded), to visualise the expression of genes identified as differentially expressed at the single cell level
+
+VlnPlot(sobj, c("Cd200", "Gtdc1", "Plscr2", "Prkn", "Thbs1", "Il17rc"), split.by = "condition")
+```
+
+```{r}
+# I've also included here some package options (but there are MANY out there) to help the interpretation of your differentially expressed genes. 
+
+library(ReactomePA)
+library(goseq)
+library(clusterProfiler)
+```

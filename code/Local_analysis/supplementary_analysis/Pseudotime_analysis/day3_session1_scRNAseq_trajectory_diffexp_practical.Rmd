@@ -1,0 +1,183 @@
+---
+title: "scRNAseq_autocorrelative_diffexp_analysis"
+author: "DJWright"
+date: "2024-08-11"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+
+## Trajectory analysis hands-on session setup
+
+This Rmarkdown script uses & discusses a worked example from the Monocle3 development team, accessible here: 
+
+http://cole-trapnell-lab.github.io/monocle-release/tutorial_data/Paul_blood_dataset_monocle3.html
+
+Please see the link for further information about Monocle3 or the example data we are working with. 
+
+```{r}
+# Check R is clear & install required packages for tutorial
+rm(list = ls()) 
+# if Monocle3 isn't already installed, run the line below, otherwise skip
+#devtools::install_github('cole-trapnell-lab/monocle3')
+
+# load the required package(s)
+#library(rmarkdown)
+#library(igraph)
+library(monocle3)
+```
+
+For the purposes of this session, let's alter R to allow us to see what Monocle is doing...(you don't need to worry about this part usually)
+
+```{r}
+# To allow us to see some output for Monocle3 operations
+DelayedArray:::set_verbose_block_processing(TRUE)
+
+# Passing a higher value will make some computations faster but use more memory. Caution needed if adjusting this value.
+options(DelayedArray.block.size=1000e6)
+```
+
+## Importing data
+
+Again, this tutorial again makes use of the example data from the Monocle3 developer team. This comprises a subset of neuronal cells in C. elegans during embryogenesis from an experiment by Packer et al (2019):
+
+https://www.science.org/doi/10.1126/science.aax1971. 
+
+This can be accessed at the following link;
+
+https://depts.washington.edu:/trapnell-lab/software/monocle3/celegans/data/
+
+We're using the trajectory analysis we ran in the previous session, so locate your previously save trajectory CDS object and import it to this session by altering the path to locate your own files;
+
+
+```{r}
+# Load an existing CDS by assigning to a new object, as per usual R procedure 
+# EDIT THIS PATH TO WHEREVER YOU SAVED YESTERDAY'S MONOCLE3 OUTPUT (should be 3 files)
+cds <- load_monocle_objects(directory_path='/Users/dwright/Documents/Teaching/scRNAseq_bioinformatics_2024/backup_diffexp_trajectory_presaved')
+
+# If you cannot find it, or were unable to save your own, you can use a pre-made example, again edit path to your save location:
+#cds <- load_monocle_objects(directory_path='/home/train/Desktop/training/SCRNAseq2024/day3_am_differential_expression/')
+
+head(cds)
+```
+
+### Finding genes that vary as a function of pseudotime 
+
+This is a common and highly relevant follow-up to trajectory analysis. We often want to know what genes change expression along branches of a trajectory - i.e. those that change with pseudotime along some biologically relevant dynamic process... 
+
+## Part 1: Running graph_test and looking at genes vs pseudotime
+
+# Step 1: Plot the trajectory
+
+Let's remind ourselves of what our trajectory looks like and ensure everything is loaded correctly. Let's plot it;
+
+```{r}
+plot_cells(cds,
+           color_cells_by = "cell.type",
+           label_groups_by_cluster=FALSE,
+           label_leaves=FALSE,
+           label_branch_points=FALSE)
+```
+
+# Step 2: Run graph_test() on the principal trajectory
+
+All the processing and analysis on the CDS was done in the previous session. Now we need to call graph_test() to actually run the autocorrelation analysis and tell it which neighbour-finding algorithm to use (KNN or the principal_graph we calculated already), in our case, the principal graph;
+
+```{r}
+# the more cores the quicker it will run (to a point) but leave it at 4 as this should be workable for most laptops. It should take around 2 mins to run graph_test on our 22,000 genes...
+ciliated_cds_pr_test_res <- graph_test(cds, neighbor_graph="principal_graph", cores=4)
+```
+
+Let's extract the genes with positive results (FDR q-value < 0.05)
+
+```{r}
+# extract row names (gene IDs) for positive results which will use later in module-finding
+pr_deg_ids <- row.names(subset(ciliated_cds_pr_test_res, q_value < 0.05))
+# similarly subset our positive result just for eyeballing now...(easier to load and view than the full result dataframe)
+pr_deg_hits <- subset(ciliated_cds_pr_test_res, q_value < 0.05)
+```
+
+# Step 3: Plotting & visualisation
+
+We can plot a few of them to see what our results look like (by looking at the pr_deg_ids and choosing some!);
+
+```{r}
+# plot some genes which show an expression profile with a positive pseudotime association
+plot_cells(cds, genes=c("hlh-4", "gcy-8", "dac-1", "oig-8"),
+           show_trajectory_graph=FALSE,
+           label_cell_groups=FALSE,
+           label_leaves=FALSE)
+```
+
+*TASK: Try other genes to get a feel for what the data look like. You can find these by looking at the ciliated_cds_pr_test_res dataframe - it has 8 columns, including the common (short) gene name and each element of the Moran I analysis done.
+
+## Part 2: Detailed pseudotime expression plots  
+
+Monocle3 also allows us a second way of visualising gene expression changes over pseudotime, but given the complexity of interpretation, it is suggested only to run this on a FEW genes at any time. The tutorial from the developers suggests we try AFD cells from our example trajectory (you can see the branch labelled AFD in the first plot of this session, from yesterday's trajectory analysis)
+
+```{r}
+# subset our CDS by AFD and pull out a few genes to look at... which you'd know by the biology of your system or by marker ID in Seurat or Monocle3 etc! 
+#AFD_genes <- c("gcy-23", "mks-2","oig-8") #another example gene set
+AFD_genes <- c("gcy-8", "dac-1", "oig-8")
+AFD_lineage_cds <- cds[rowData(cds)$gene_short_name %in% AFD_genes,
+                       colData(cds)$cell.type %in% c("AFD")]
+```
+
+We then use a function called "plot_genes_in_pseudotime()" which allows a clearer and more explicit view of our gene expression of each of the small list of genes over pseudotime. We can colour them by different parameters (e.g. emberyo-.time.bin like yesterday's trajectory analysis) to show where each data point for each gene comes from and allow us to better interpret the change over real time (not just pseudotime);
+
+```{r}
+plot_genes_in_pseudotime(AFD_lineage_cds,
+                         color_cells_by="embryo.time.bin",
+                         min_expr=0.5)
+```
+
+*Question: what gene expresses first out of our set in the AFD branch of our trajectory? If you have time, plot other genes to see how this function could help you visualise your expression patterns
+
+## Part 3 Analysing individual parts of a trajectory
+
+```{r}
+# initiate an igraph for selecting trajectory section / branch / part / group of cells etc 
+# choose a part of the trajectory to subset & study
+cds_subset <- choose_cells(cds)
+
+# run the same graph_test function but on the subsetted CDS object to analyse only the relevant part
+subset_pr_test_res <- graph_test(cds_subset, neighbor_graph="principal_graph", cores=4)
+subset_pr_deg_ids <- row.names(subset(subset_pr_test_res, q_value < 0.05))
+# similarly subset our positive result just for eyeballing now...(easier to load and view than the full result dataframe)
+subset_pr_deg_hits <- subset(ciliated_cds_pr_test_res, q_value < 0.05)
+```
+
+*TASK - try plotting these subsetted results in a similar manner to the full CDS above. Pick some genes from the list of positive "hits" and then plot both the trajectory image approach and the details gene x pseudotime plots. You can enter the code in the window below and run it as usual;
+
+```{r}
+# Enter your plotting code here 
+
+```
+
+#### EXTRA IF TIME ALLOWS / SELF-DIRECTED LEARNING: Arranging expression data into modules
+
+We can go one step further than just looking at autocorrelative expression of individual genes ... we can group them into modules of similar responses, perhaps giving us insights about the process we are studying, or help us further identify cell states along the dynamic process. Please see http://cole-trapnell-lab.github.io/monocle-release/tutorial_data/Paul_blood_dataset_monocle3.html for full code details - below is a summary of the possibilities. 
+
+```{r}
+# collect the genes showing autocorrelative expression into modules
+gene_module_df <- find_gene_modules(cds[pr_deg_ids,], resolution=c(10^seq(-6,-1)))
+
+# use aggregate matrix function to plot the subsetted trajectory modules 
+agg_mat <- aggregate_gene_expression(cds_subset, gene_module_df)
+module_dendro <- hclust(dist(agg_mat))
+gene_module_df$module <- factor(gene_module_df$module, 
+                                levels = row.names(agg_mat)[module_dendro$order])
+
+# plot the modules (using your new gene_module_df in place of a geneslist!)
+plot_cells(cds_subset,
+           genes=gene_module_df,
+           label_cell_groups=FALSE,
+           show_trajectory_graph=FALSE)
+
+#plot a heatmap of our modules using tibble and pheatmap for processing our data
+cell_group_df <- tibble::tibble(cell=row.names(colData(cds_subset)), 
+                                cell_group=colData(cds_subset)$cell.type)
+agg_mat <- aggregate_gene_expression(cds_subset, gene_module_df, cell_group_df)
+row.names(agg_mat) <- stringr::str_c("Module ", row.names(agg_mat))
+pheatmap::pheatmap(agg_mat, scale="column", clustering_method="ward.D2")
+```

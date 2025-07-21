@@ -1,0 +1,320 @@
+---
+title: "Tutoriel Seurat : Analyse de données Single-Cell RNA-seq"
+author: "Bioinformaticien"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+    theme: cosmo
+    highlight: tango
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Introduction
+
+Ce tutoriel vous guide à travers le workflow standard d'analyse de données single-cell RNA-seq avec Seurat. Chaque étape est expliquée en français avec des exemples de code.
+
+## Objectifs d'apprentissage
+
+- Comprendre les étapes principales du workflow Seurat
+- Savoir interpréter les métriques de qualité
+- Maîtriser les techniques de clustering et d'identification de marqueurs
+- Être capable d'assigner des types cellulaires
+
+# Étape 0: Chargement des packages
+
+```{r packages}
+# Chargement des packages nécessaires
+library(Seurat)
+library(ggplot2)
+library(cowplot)
+library(dplyr)
+
+cat("Packages chargés avec succès!\n")
+```
+
+# Étape 1: Lecture des données
+
+## Données 10X Genomics
+
+Pour les données 10X, utilisez la fonction `Read10X()` :
+
+```{r read_10x, eval=FALSE}
+# Exemple pour les données 10X
+data_10x <- Read10X(data.dir = "/chemin/vers/filtered_gene_bc_matrices")
+```
+
+**Explication :**
+- `Read10X()` lit les fichiers de sortie du pipeline Cellranger
+- Retourne une matrice de comptes UMI (Unique Molecular Identifiers)
+- Les lignes représentent les gènes, les colonnes les cellules
+- Les valeurs indiquent le nombre de molécules détectées
+
+## Données Smart-seq2
+
+Pour les données plate-based comme Smart-seq2 :
+
+```{r read_smartseq2, eval=FALSE}
+# Exemple pour les données Smart-seq2
+ss2_matrix <- read.table(file = "fichier.tsv", header = TRUE, row.names = "gene_name")
+```
+
+# Étape 2: Création de l'objet Seurat
+
+```{r create_seurat, eval=FALSE}
+# Création de l'objet Seurat
+seurat_object <- CreateSeuratObject(counts = data_10x, project = "mon_projet")
+```
+
+**Qu'est-ce qu'un objet Seurat ?**
+- Un conteneur qui stocke les données et les analyses
+- Contient la matrice de comptes, les métadonnées et les résultats
+- Permet d'organiser et de manipuler facilement les données
+
+# Étape 3: Contrôle qualité (QC)
+
+## Calcul des métriques de qualité
+
+```{r qc_metrics, eval=FALSE}
+# Calcul du pourcentage de gènes mitochondriaux
+seurat_object[["percent.mt"]] <- PercentageFeatureSet(seurat_object, pattern = "^MT-")
+
+# Affichage des métriques de base
+head(seurat_object@meta.data, n = 5)
+```
+
+**Métriques importantes :**
+- `nFeature_RNA` : nombre de gènes détectés par cellule
+- `nCount_RNA` : nombre total de molécules par cellule  
+- `percent.mt` : pourcentage de gènes mitochondriaux
+
+## Visualisation des métriques
+
+```{r qc_plots, eval=FALSE}
+# Violin plots des métriques de QC
+VlnPlot(seurat_object, features = c("nFeature_RNA", "nCount_RNA", "percent.mt"), ncol = 3)
+
+# Graphiques de corrélation
+FeatureScatter(seurat_object, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
+```
+
+# Étape 4: Filtrage des données
+
+```{r filtering, eval=FALSE}
+# Filtrage des cellules de mauvaise qualité
+seurat_object <- subset(seurat_object, 
+                       subset = nFeature_RNA > 200 & 
+                               nFeature_RNA < 2500 & 
+                               percent.mt < 5)
+
+# Affichage du nombre de cellules après filtrage
+seurat_object
+```
+
+**Critères de filtrage :**
+- `nFeature_RNA > 200` : élimine les cellules avec trop peu de gènes
+- `nFeature_RNA < 2500` : élimine les doublets/multiplets
+- `percent.mt < 5` : élimine les cellules avec trop de gènes mitochondriaux
+
+# Étape 5: Normalisation
+
+```{r normalization, eval=FALSE}
+# Normalisation des données
+seurat_object <- NormalizeData(seurat_object, 
+                              normalization.method = "LogNormalize", 
+                              scale.factor = 10000)
+```
+
+**Pourquoi normaliser ?**
+- Les cellules peuvent avoir des nombres différents de molécules détectées
+- La normalisation permet de comparer l'expression entre cellules
+- Méthode LogNormalize : normalise par le total d'expression, multiplie par un facteur d'échelle, puis applique une transformation log
+
+# Étape 6: Identification des gènes variables
+
+```{r variable_features, eval=FALSE}
+# Identification des gènes variables
+seurat_object <- FindVariableFeatures(seurat_object, 
+                                     selection.method = "vst", 
+                                     nfeatures = 2000)
+
+# Affichage des 10 gènes les plus variables
+top10 <- head(VariableFeatures(seurat_object), 10)
+print(top10)
+
+# Visualisation des gènes variables
+VariableFeaturePlot(seurat_object)
+```
+
+**Pourquoi sélectionner des gènes variables ?**
+- Réduit le bruit technique
+- Se concentre sur les gènes biologiquement pertinents
+- Améliore les performances computationnelles
+
+# Étape 7: Mise à l'échelle (Scaling)
+
+```{r scaling, eval=FALSE}
+# Mise à l'échelle des données
+all_genes <- rownames(seurat_object)
+seurat_object <- ScaleData(seurat_object, features = all_genes)
+```
+
+**Pourquoi scaler ?**
+- Centre l'expression de chaque gène à 0
+- Met la variance de chaque gène à 1
+- Donne un poids égal à tous les gènes dans les analyses suivantes
+
+# Étape 8: Analyse en composantes principales (PCA)
+
+```{r pca, eval=FALSE}
+# Exécution de la PCA
+seurat_object <- RunPCA(seurat_object, 
+                       features = VariableFeatures(object = seurat_object))
+
+# Exploration des résultats PCA
+print(seurat_object[["pca"]], dims = 1:5, nfeatures = 5)
+
+# Visualisation des loadings
+VizDimLoadings(seurat_object, dims = 1:2)
+
+# Graphique du coude (Elbow plot)
+ElbowPlot(seurat_object)
+```
+
+**Qu'est-ce que la PCA ?**
+- Réduit la dimensionnalité des données
+- Combine les gènes corrélés en "métacaractéristiques"
+- Permet de capturer la variance maximale avec moins de dimensions
+
+# Étape 9: Clustering
+
+## Construction du graphe de voisins
+
+```{r neighbors, eval=FALSE}
+# Construction du graphe de voisins
+seurat_object <- FindNeighbors(seurat_object, dims = 1:10)
+```
+
+## Clustering
+
+```{r clustering, eval=FALSE}
+# Clustering des cellules
+seurat_object <- FindClusters(seurat_object, resolution = 0.5)
+
+# Affichage des identités de clusters
+head(Idents(seurat_object), 10)
+```
+
+**Paramètre de résolution :**
+- `resolution = 0.5` : granularité du clustering
+- Plus la résolution est élevée, plus il y a de clusters
+- Recommandé : entre 0.5 et 1.0
+
+## UMAP
+
+```{r umap, eval=FALSE}
+# Réduction dimensionnelle non-linéaire
+seurat_object <- RunUMAP(seurat_object, dims = 1:10)
+
+# Visualisation des clusters
+DimPlot(seurat_object, reduction = "umap")
+```
+
+# Étape 10: Identification des gènes marqueurs
+
+```{r markers, eval=FALSE}
+# Identification des marqueurs pour tous les clusters
+seurat_markers <- FindAllMarkers(seurat_object, 
+                                only.pos = TRUE, 
+                                min.pct = 0.25, 
+                                logfc.threshold = 0.25)
+
+# Extraction des meilleurs marqueurs par cluster
+top_markers <- seurat_markers %>%
+  group_by(cluster) %>%
+  slice_max(n = 2, order_by = avg_log2FC)
+
+print(top_markers)
+```
+
+**Qu'est-ce qu'un gène marqueur ?**
+- Gène exprimé spécifiquement dans un cluster
+- Permet d'identifier le type cellulaire
+- Aide à comprendre la biologie des populations
+
+# Étape 11: Assignation des types cellulaires
+
+## Visualisation des marqueurs
+
+```{r marker_visualization, eval=FALSE}
+# Feature plot des marqueurs connus
+known_markers <- c("MS4A1", "GNLY", "CD3E", "CD14", "FCER1A", "FCGR3A", "LYZ", "PPBP", "CD8A")
+FeaturePlot(seurat_object, features = known_markers)
+
+# Violin plots des marqueurs identifiés
+VlnPlot(seurat_object, features = top_markers$gene[1:6])
+
+# Dot plot
+DotPlot(seurat_object, features = c("CD247", "CD3E", "CD9"))
+```
+
+## Assignation des noms de types cellulaires
+
+```{r cell_types, eval=FALSE}
+# Assignation des types cellulaires
+new_cluster_ids <- c("Naive CD4 T", "CD14+ Mono", "Memory CD4 T", "B", 
+                     "CD8 T", "FCGR3A+ Mono", "NK", "DC", "Platelet")
+names(new_cluster_ids) <- levels(seurat_object)
+seurat_object <- RenameIdents(seurat_object, new_cluster_ids)
+
+# Visualisation finale
+DimPlot(seurat_object, reduction = "umap", label = TRUE, pt.size = 0.5) + NoLegend()
+
+# Statistiques des clusters
+table(Idents(seurat_object))
+prop.table(table(Idents(seurat_object)))
+```
+
+# Étape 12: Sauvegarde des résultats
+
+```{r save, eval=FALSE}
+# Sauvegarde de l'objet Seurat
+saveRDS(seurat_object, file = "mon_analyse_seurat.rds")
+
+cat("Analyse terminée et sauvegardée!\n")
+```
+
+# Résumé du workflow
+
+1. **Chargement des packages** : Seurat, ggplot2, cowplot, dplyr
+2. **Lecture des données** : Read10X() pour 10X, read.table() pour Smart-seq2
+3. **Création de l'objet Seurat** : CreateSeuratObject()
+4. **Contrôle qualité** : calcul des métriques et visualisation
+5. **Filtrage** : élimination des cellules de mauvaise qualité
+6. **Normalisation** : LogNormalize
+7. **Gènes variables** : FindVariableFeatures()
+8. **Scaling** : ScaleData()
+9. **PCA** : RunPCA()
+10. **Clustering** : FindNeighbors() + FindClusters()
+11. **UMAP** : RunUMAP()
+12. **Marqueurs** : FindAllMarkers()
+13. **Types cellulaires** : assignation basée sur les marqueurs
+14. **Sauvegarde** : saveRDS()
+
+# Conseils importants
+
+- **Adaptez les seuils** de filtrage à vos données spécifiques
+- **Testez différentes résolutions** de clustering
+- **Validez les types cellulaires** avec la littérature
+- **Sauvegardez régulièrement** vos résultats
+- **Documentez vos choix** d'analyse
+
+# Ressources supplémentaires
+
+- [Documentation Seurat](https://satijalab.org/seurat/)
+- [Vignettes Seurat](https://satijalab.org/seurat/articles/get_started.html)
+- [Forum Seurat](https://github.com/satijalab/seurat/discussions) 

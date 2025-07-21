@@ -4,12 +4,31 @@
 # Sequencing files and raw data
 *.fastq
 *.fastq.gz
-*.bam
+*.bam # ignore the bam files in the STARsolo output
 *.gz
+
+# Raw data
 data/raw_data/original_data/*
+data/raw_data/unzipped_data/*
+
+# Trimmed data
+data/Trim_process/*
+
+# Subsampled data
+# Processed and subsampled data (except first_reads/5000_reads)
+data/subsampled_data/*
+!data/subsampled_data/first_reads/
+!data/subsampled_data/first_reads/5000_reads/
+
+# Merged data
+data/merged_data/*
+
 
 # Analyzed data files
 *.h5ad
+# Exception: allow filtered h5ad files if size permits
+!data/Anndata/filtered/*.h5ad
+
 *.rds
 *.RDS
 
@@ -26,16 +45,9 @@ data/raw_data/original_data/*
 env/
 
 # =============================================================================
-# QUARTO/R MARKDOWN FILES
-# =============================================================================
-/.quarto/
-/.luarc.json
-_book
-*Rmd
-
-# =============================================================================
 # SYSTEM FILES
 # =============================================================================
 # macOS system files
 .DS_Store
 **/.DS_Store
+
