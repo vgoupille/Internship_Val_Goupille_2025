@@ -4,7 +4,7 @@
 #SBATCH --mail-user=valentin.goupille@univ-rennes.fr
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem=128G
+#SBATCH --mem=600G
 #SBATCH --time=48:00:00
 #SBATCH --output=/projects/microsplit/scripts/4_barcodes_and_alignment/STARsolo/STARsolo_microSPLIT_DOL/logs/starsolo_pipeline_%j.out
 #SBATCH --error=/projects/microsplit/scripts/4_barcodes_and_alignment/STARsolo/STARsolo_microSPLIT_DOL/logs/starsolo_pipeline_%j.err
