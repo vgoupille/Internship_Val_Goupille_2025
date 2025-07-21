@@ -26,11 +26,16 @@ data/merged_data/*
 
 # Analyzed data files
 *.h5ad
-# Exception: allow filtered h5ad files if size permits
-!data/Anndata/filtered/*.h5ad
+# Exception: allow specific smaller filtered h5ad files
+!data/Anndata/filtered/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3b_v2.h5ad
+!data/Anndata/filtered/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c.h5ad
+# Exclude large file that exceeds GitHub limits
+data/Anndata/filtered/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI.h5ad
 
 *.rds
 *.RDS
+# Exception: allow specific smaller RDS files
+!data/RDS/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c_SeuratV5.rds
 
 # =============================================================================
 # LOG AND ERROR FILES
