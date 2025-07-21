@@ -216,20 +216,20 @@ def main():
     # FILE CONFIGURATION
     # =============================================================================
 
-    # Simple configuration - use Excel file in data/tab directory
-    input_file = "data/tab/metadata_DOL_rep1.xlsx"
+    # Simple configuration - use Excel file in data/meta directory
+    input_file = "data/meta/metadata_DOL_rep1.xlsx"
 
     # Check if file exists
     if not Path(input_file).exists():
         print(f"❌ Error: The file {input_file} does not exist")
         print(f"Current directory: {Path.cwd()}")
-        print("Please ensure the Excel file is in the data/tab/ directory")
+        print("Please ensure the Excel file is in the data/meta/ directory")
         return
 
     print(f"✓ Input file found: {input_file}")
 
-    # Output configuration
-    output_config = SimpleOutputConfig("data/barcodes_result")
+    # Output configuration - compatible with STARsolo pipeline
+    output_config = SimpleOutputConfig("data/raw_data/barcodes")
     output_config.setup_directories()
 
     print(f"✓ Output directory configured: {output_config.base_dir}")
