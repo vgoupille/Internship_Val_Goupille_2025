@@ -295,5 +295,27 @@
       "Appendices",
       "<span class='chapter-number'>A</span>  <span class='chapter-title'>Appendix </span>"
     ]
+  },
+  {
+    "objectID": "chapters/B-Appendix.html",
+    "href": "chapters/B-Appendix.html",
+    "title": "Appendix B — Appendix B:",
+    "section": "",
+    "text": "MultiQC Report R1 Before Trimming",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B</span>"
+    ]
+  },
+  {
+    "objectID": "chapters/B-Appendix.html#warning",
+    "href": "chapters/B-Appendix.html#warning",
+    "title": "Appendix B — Appendix B:",
+    "section": "B.1 warning",
+    "text": "B.1 warning\n!!!!! WARNING: while processing sjdbGTFfile=/projects/microsplit/data/processed_data/STARsolo_result/merged_trimmed/merged/raw_data/genome_annotation/genome_annotation_PsR401_fixed.gtf, line: CP125962.1 Genbank exon 298557 300953 . - 0 transcript_id “gene-QLH64_29550”; gene_id “gene-QLH64_29550”; gene_name “QLH64_29550”; exon end = 300953 is larger than the chromosome CP125962.1 length = 299955 , will skip this exon\nLog of the STARsolo run : Alignment statistics: ———————– Number of input reads | 1284475633 Average input read length | 135 Uniquely mapped reads number | 46733841 Uniquely mapped reads % | 3.64% Number of reads mapped to multiple loci | 1103762730 % of reads mapped to multiple loci | 85.93% Number of reads unmapped: other | 128049614 % of reads unmapped: other | 9.97% Mismatch rate per base, % | 0.38% Fri May 30 15:39:42 CEST 2025 - Pipeline completed!\n\nSTARsolo KneePant filtering results\nAs a comparison to our custom filtering approach, we also analyzed the data using STARsolo’s default KneePant filtering method. The following table presents the results obtained with this alternative filtering strategy:\n\n\n\nTable B.1: STARsolo KneePant filtering results for comparison\n\n\n\n\n\n\n\n\n\n\nMetric\nValue\nBiological Significance\n\n\n\n\nEstimated Number of Cells\n27,203\nLarge population for DoL analysis\n\n\nMean Reads per Cell\n470\nGood coverage depth\n\n\nMedian Reads per Cell\n381\nConsistent coverage\n\n\nMean UMI per Cell\n465\nReliable molecular counting\n\n\nMedian UMI per Cell\n378\nConsistent UMI distribution\n\n\nMean Genes per Cell\n296\nRich transcriptional profiles\n\n\nMedian Genes per Cell\n258\nConsistent gene detection\n\n\nTotal Genes Detected\n6,035\nComprehensive gene coverage\n\n\n\n\n\n\nResults obtained using STARsolo’s default KneePant filtering method. This approach would have resulted in approximately 27,000 cells with higher average coverage per cell, but potentially at the cost of removing biologically relevant stressed cells that might exhibit lower quality metrics. In contrast, our custom filtering approach was specifically designed to target approximately 3,000 high-quality cells across all experimental conditions, prioritizing balanced representation of each condition\nThe KneePant method applies a knee plot analysis to identify the inflection point in the barcode rank plot, automatically determining the threshold between genuine cells and background noise. While this method provides a standardized approach to cell filtering, it may not be optimal for division of labor analysis where stressed cells with potentially lower quality metrics could represent important biological subpopulations. Our targeted approach of ~3,000 cells ensures sufficient statistical power for differential expression analysis while maintaining balanced representation across all experimental conditions (2 media × 3 biological replicates × 3 timepoints).\nR2 before trimming\n\n\n\nTable B.2: R1 before trimming\n\n\n\n\n\nSample Name\nDups\nGC\nMedian len\n\n\n\n\nBC_0076_R2\n88.9%\n54.0%\n91bp\n\n\nBC_0077_R2\n18.6%\n53.0%\n91bp\n\n\nBC_0079_R2\n20.3%\n54.0%\n91bp\n\n\nBC_0080_R2\n88.1%\n54.0%\n91bp\n\n\n\n\n\n\nR2 after trimming\n\n\n\nTable B.3: R1 after trimming\n\n\n\n\n\nSample Name\nDups\nGC\nMedian len\n\n\n\n\nBC_0080_R2\n92.0%\n53.0%\n90bp\n\n\nBC_0079_R2\n23.5%\n53.0%\n90bp\n\n\nBC_0077_R2\n21.4%\n53.0%\n90bp\n\n\nBC_0076_R2\n92.9%\n53.0%\n90bp\n\n\n\n\n\n\n\n\n\nTable B.4: Before trimming\n\n\n\n\n\nSample Name\nDups\nGC\nMedian len\n\n\n\n\nBC_0076_R1\n94.5%\n55.0%\n241bp\n\n\nBC_0077_R1\n94.1%\n53.0%\n241bp\n\n\nBC_0079_R1\n93.8%\n53.0%\n241bp\n\n\nBC_0080_R1\n94.6%\n54.0%\n241bp\n\n\n\n\n\n\n\n\n\nTable B.5: After trimming\n\n\n\n\n\nSample Name\nDups\nGC\nMedian len\n\n\n\n\nBC_0076_R1\n98.7%\n51.0%\n127bp\n\n\nBC_0077_R1\n98.6%\n51.0%\n157bp\n\n\nBC_0079_R1\n98.6%\n51.0%\n152bp\n\n\nBC_0080_R1\n98.7%\n51.0%\n132bp\n\n\n\n\n\n\n\n\nsaturation\n\n\n\nsaturation",
+    "crumbs": [
+      "Appendices",
+      "<span class='chapter-number'>B</span>  <span class='chapter-title'>Appendix B</span>"
+    ]
   }
 ]

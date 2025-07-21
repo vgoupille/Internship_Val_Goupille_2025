@@ -24,8 +24,8 @@ book:
   appendices:
     - text: "Appendix "
       file: "chapters/Appendix.qmd"
-    #- text: "Annexe B"
-    #  file: "chapters/B-Appendix.qmd"
+    - text: "Appendix B"
+      file: "chapters/B-Appendix.qmd"
     #- text: "Annexe C"
     #  file: "chapters/C-Appendix.qmd"
     

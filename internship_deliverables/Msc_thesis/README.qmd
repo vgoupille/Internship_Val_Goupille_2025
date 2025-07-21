@@ -59,7 +59,7 @@ if (length(py_files) > 0) {
 }
 
 # Copy oral presentation PDF to docs/
-oral_pdf <- "data/Oral_Valentin_GOUPILLE.pdf"
+oral_pdf <- "../Oral_Valentin_GOUPILLE.pdf"
 if (file.exists(oral_pdf)) {
   file.copy(oral_pdf, "docs/", overwrite = TRUE)
   message("✅ Présentation orale copiée dans docs/")
@@ -67,20 +67,3 @@ if (file.exists(oral_pdf)) {
   message("Fichier de présentation orale non trouvé")
 }
 ```
-
-# University of Rennes Msc Thesis Template
-
-This is a Quarto template that assists you in creating a University of Rennes Msc Thesis. 
-
-## Installation
-
-You can create a thesis based on this template with the following command:
-
-```bash
-quarto use template quarto-vgoupille/Rapport_stage
-```
-
-This will install the extension and create the files that you can use as a starting place for your thesis.
-
-[![](examples/template.png)](examples/template.pdf)
-
