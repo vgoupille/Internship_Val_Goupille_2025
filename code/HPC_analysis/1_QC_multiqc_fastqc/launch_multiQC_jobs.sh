@@ -5,7 +5,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 PROJECT_DIR="$( cd "$SCRIPT_DIR/../.." && pwd )"
 LOGS_DIR="${SCRIPT_DIR}/logs"
 ENV_DIR="${PROJECT_DIR}/env/envMultiQC"
-DEFAULT_OUTPUT_DIR="${PROJECT_DIR}/data/processed_data/multiqc_results"
+DEFAULT_OUTPUT_DIR="${PROJECT_DIR}/data/QC_file/multiqc_results"
 SAMPLES_YAML="${PROJECT_DIR}/data/info/samples/samples_trimming.yaml"
 ENV_YAML="${SCRIPT_DIR}/environment_multiQC.yml"
 

@@ -1,45 +1,35 @@
 # Sample information with paired-end reads
-# Format: sample_name: {R1: path_to_R1, R2: path_to_R2}
+# Updated paths - removed obsolete trimmed paths and updated subsampled to 5000 reads
  
 samples:
   BC_0076:
     R1:
       unzipped: data/raw_data/unzipped_data/fastq/BC_0076_R1.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0076_R1_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0076_R1.fastq.gz
-      
-
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0076_R1_first5000.fastq.gz
     R2: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0076_R2.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0076_R2_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0076_R2.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0076_R2_first5000.fastq.gz
   BC_0077:
     R1: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0077_R1.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0077_R1_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0077_R1.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0077_R1_first5000.fastq.gz
     R2: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0077_R2.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0077_R2_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0077_R2.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0077_R2_first5000.fastq.gz
   BC_0079:
     R1: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0079_R1.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0079_R1_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0079_R1.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0079_R1_first5000.fastq.gz
     R2: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0079_R2.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0079_R2_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0079_R2.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0079_R2_first5000.fastq.gz
   BC_0080:
     R1: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0080_R1.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0080_R1_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0080_R1.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0080_R1_first5000.fastq.gz
     R2: 
       unzipped: data/raw_data/unzipped_data/fastq/BC_0080_R2.fastq.gz
-      subsampled: data/raw_data/subsampled_data/first_reads/1000000_reads/BC_0080_R2_first1000000.fastq.gz
-      trimmed: data/processed_data/Trim_result_29_05_25/BC_0080_R2.fastq.gz
+      subsampled: data/subsampled_data/first_reads/5000_reads/BC_0080_R2_first5000.fastq.gz
   merged:
     R1:
       merged_trimmed: /projects/microsplit/data/processed_data/merged_data/trimmed/merged_trimmed-R1.fastq.gz
