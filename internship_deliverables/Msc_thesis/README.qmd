@@ -61,9 +61,11 @@ if (length(py_files) > 0) {
 # Copy oral presentation PDF to docs/
 oral_pdf <- "../Oral_Valentin_GOUPILLE.pdf"
 if (file.exists(oral_pdf)) {
-  file.copy(oral_pdf, "docs/", overwrite = TRUE)
+  file.copy(oral_pdf, "docs/Oral_Valentin_GOUPILLE.pdf", overwrite = TRUE)
   message("✅ Présentation orale copiée dans docs/")
 } else {
-  message("Fichier de présentation orale non trouvé")
+  message("❌ Fichier de présentation orale non trouvé:", oral_pdf)
+  message("Vérification des fichiers disponibles:")
+  list.files("../", pattern = "*.pdf")
 }
 ```

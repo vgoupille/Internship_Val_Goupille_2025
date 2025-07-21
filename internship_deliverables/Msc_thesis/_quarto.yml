@@ -75,7 +75,7 @@ format:
       left:
         - text: "Download PDF"
           #file: _book/thesis.pdf
-          file: docs/thesis.pdf
+          file: thesis.pdf
     comments:
       hypothesis: true
     other-links:
