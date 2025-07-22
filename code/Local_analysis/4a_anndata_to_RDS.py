@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+Convert AnnData objects to Seurat RDS format for R analysis.
+
+Author: Valentin Goupille
+Date: Bioinfo_internship_2025
+"""
+
 # %%
 import os
 import sys

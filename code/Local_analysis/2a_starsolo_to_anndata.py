@@ -3,6 +3,9 @@
 Script to convert STARsolo output to AnnData objects.
 Creates 6 different AnnData objects for Gene/GeneFull, raw/filtered, and different matrix types.
 
+Author: Valentin Goupille
+Date: Bioinfo_internship_2025
+
 Usage:
     Configure the input path in the main() function's CONFIGURATION section.
     Default input: data/STARsolo_result/merged_trimmed/merged/Output_DOL_microsplit_starsolo2/starsolo_output2/Solo.out

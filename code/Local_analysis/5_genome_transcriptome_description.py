@@ -1,9 +1,12 @@
-# %%
+#!/usr/bin/env python3
 """
 Genome and Transcriptome Description Analysis
 
 This script analyzes gene type distribution in both genome and transcriptome
 using donut plots to visualize the proportion of different gene types.
+
+Author: Valentin Goupille
+Date: Bioinfo_internship_2025
 """
 
 import os
@@ -29,8 +32,8 @@ GENE_TYPE_MAPPING = {
 }
 
 # File paths
-DATA_PATH = "data/anndata_objects_with_complete_metadata/"
-NCBI_DATA_PATH = "data/ncbi/ncbi_dataset.tsv"
+DATA_PATH = "data/Anndata/with_metadata/"
+NCBI_DATA_PATH = "data/genome_annotation/ncbi_dataset_with_id.tsv"
 INPUT_FILE = "GeneFull_raw_unique_mult_with_metadata.h5ad"
 
 # %%

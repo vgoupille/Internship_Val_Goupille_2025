@@ -3,7 +3,7 @@
 Add cell and gene metadata to AnnData objects.
 
 Author: Valentin Goupille
-Date: 2025-07-16
+Date: Bioinfo_internship_2025
 """
 
 import anndata as ad

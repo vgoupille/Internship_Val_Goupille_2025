@@ -2,7 +2,7 @@
 """
 Barcode Processing for microSPLiT Protocol
 Author: Valentin Goupille
-Date: 2025-05-25
+Date: Bioinfo_internship_2025
 """
 
 import pandas as pd

@@ -1,6 +1,10 @@
+#!/usr/bin/env python3
 """
 Visualization functions for single-cell analysis.
 This module contains functions for creating plots and visualizations of anndata objects.
+
+Author: Valentin Goupille
+Date: Bioinfo_internship_2025
 """
 
 import matplotlib.pyplot as plt

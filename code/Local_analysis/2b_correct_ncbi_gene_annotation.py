@@ -5,6 +5,9 @@ Removes redundant columns and keeps only useful ones.
 annotation file from:
 https://www.ncbi.nlm.nih.gov/datasets/gene/GCA_030064105.1/
 
+Author: Valentin Goupille  
+Date: Bioinfo_internship_2025
+
 =============================================================================
 SCRIPT PURPOSE AND WORKFLOW EXPLANATION
 =============================================================================

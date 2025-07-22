@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""
+Initial UMI-based quality filtering for single-cell data.
+
+Author: Valentin Goupille
+Date: Bioinfo_internship_2025
+"""
+
 # %%
 import os
 import sys

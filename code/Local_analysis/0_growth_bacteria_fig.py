@@ -2,7 +2,7 @@
 """
 Growth Bacteria Figure
 Author: Valentin Goupille
-Date: 2025-07-16
+Date: Bioinfo_internship_2025
 """
 
 
@@ -18,7 +18,7 @@ os.chdir(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file_
 # %%
 
 # Read the Excel file without header
-df = pd.read_excel("data/tab/plan_exp.xlsx", sheet_name="suivi", header=None)
+df = pd.read_excel("data/meta/plan_exp.xlsx", sheet_name="suivi", header=None)
 
 # Convert the first row values (except the first column) to datetime
 df.iloc[0, 1:] = pd.to_datetime(df.iloc[0, 1:])
@@ -82,7 +82,7 @@ print(data_long)
 # %%
 
 # Read the file containing ODt values
-odt_df = pd.read_excel("data/tab/plan_exp.xlsx", sheet_name="ODt")
+odt_df = pd.read_excel("data/meta/plan_exp.xlsx", sheet_name="ODt")
 
 print(odt_df)
 
