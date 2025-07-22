@@ -41,18 +41,57 @@ graph TD
     B --> C[Data Exploration & Validation]
     C --> D[Subsampling for Testing]
     C --> E[Quality Control]
-    E --> F[Barcode Processing]
-    E --> G[Read Trimming Optional]
-    F --> H[Data Merging]
-    G --> H
-    H --> I[STARsolo Alignment]
+    E --> G[Read Trimming]
+    G --> H[Data Merging]
+    F[Metadata Generation] --> I[STARsolo Alignment]
+    H --> I
     I --> J[AnnData Conversion]
     J --> K[Cell/Gene Filtering]
     K --> L[Single-Cell Analysis]
-    L --> M[Division of Labor Discovery]
+    L --> M[Division of Labor Analysis]
 ```
 
 ## 🗂️ Repository Structure
+
+### Complete Repository Structure
+
+```
+📁 Internship_Val_Goupille_2025/
+├── 📄 README.md                        # Main documentation (this file)
+├── 📄 CLAUDE.md                        # AI assistant instructions
+├── 📁 code/                            # All analysis code
+│   ├── 📁 HPC_analysis/                # High-performance computing scripts
+│   │   ├── 📁 0_useful_scripts/        # Utility scripts (download, extract, merge)
+│   │   ├── 📁 1_QC_multiqc_fastqc/     # Quality control pipeline
+│   │   ├── 📁 2_trimming/              # Read trimming pipeline
+│   │   └── 📁 3_barcodes_and_alignment/ # STARsolo alignment pipeline
+│   └── 📁 Local_analysis/              # Python/R analysis scripts
+│       ├── 📄 1_barcode_processing.py   # Extract cell barcodes
+│       ├── 📄 2a_starsolo_to_anndata.py # Convert to AnnData format
+│       ├── 📄 3a-3c_filtering_*.py      # Quality filtering pipeline
+│       ├── 📄 4a_anndata_to_RDS.py      # Convert to Seurat format
+│       ├── 📄 6a-7_*.ipynb              # Analysis notebooks
+│       ├── 📁 BacSC/                   # Custom bacterial scRNA-seq module
+│       └── 📁 jupyter/                 # Interactive notebooks with visualizations
+├── 📁 data/                            # All data organized by processing stage
+│   ├── 📁 subsampled_data/             # Test datasets (5000 reads)
+│   ├── 📁 barcodes_result/             # Cell barcode extraction results
+│   ├── 📁 STARsolo_result/             # Genome alignment results
+│   ├── 📁 Anndata/                     # Single-cell data objects (Python)
+│   ├── 📁 RDS/                         # Seurat objects (R)
+│   ├── 📁 QC_file/                     # Quality control reports
+│   ├── 📁 genome_annotation/           # Reference genome files
+│   ├── 📁 info/                        # Configuration files (YAML)
+│   └── 📁 meta/                        # Experimental metadata
+├── 📁 internship_deliverables/         # Academic deliverables
+│   ├── 📁 Msc_thesis/                  # Complete thesis (Quarto format)
+│   ├── 📄 Msc_thesis_Valentin_Goupille_2025.pdf
+│   └── 📄 Oral_Valentin_GOUPILLE.pdf
+└── 📁 misc/                            # Supplementary materials
+    ├── 📁 supplementary_code/          # Additional analysis scripts
+    ├── 📁 interim_meetings/            # Meeting presentations
+    └── 📁 obsidian/                    # Research notes
+```
 
 ### Core Directories
 
@@ -61,19 +100,39 @@ graph TD
 - **`data/`** - All data files organized by processing stage
 - **`internship_deliverables/`** - Thesis and presentation materials
 
+### Interactive Analysis System
+
+**Python Scripts & Jupyter Integration:**
+- Most Python scripts in `code/Local_analysis/` are designed to work interactively
+- Corresponding Jupyter notebooks in `code/Local_analysis/jupyter/` provide:
+  - **Interactive execution** with cell-by-cell running
+  - **Rich visualizations** (plots, graphs, interactive figures)
+  - **Step-by-step exploration** of data processing
+  - **Real-time parameter adjustment**
+
+**Visualization Features:**
+- Quality control plots and filtering statistics
+- Gene expression distributions and scatter plots  
+- Cell clustering and dimensionality reduction (PCA, UMAP)
+- Growth curves and experimental condition comparisons
+- Interactive exploration of single-cell data
+
+**ℹ️ Info:** For optimal analysis experience, use Jupyter Lab to open notebooks in `code/Local_analysis/jupyter/` - this allows you to see all visualizations and interact with the data processing steps.
+
 ### Data Organization
 
 ```
 data/
-├── raw_data/unzipped_data/          # Original FASTQ files
 ├── subsampled_data/first_reads/     # Test datasets (5000 reads)
-├── Trim_process/                    # Trimmed reads per sample
-├── merged_data/                     # All samples merged together
-├── barcodes_result/                 # Extracted cell barcodes
-├── STARsolo_result/                 # Alignment results
-├── Anndata/                         # Single-cell data objects
-├── QC_file/                         # Quality control reports
-└── info/                            # Metadata and configuration
+├── barcodes_result/                 # Extracted cell barcodes and metadata
+├── STARsolo_result/                 # Alignment results and processing logs
+├── Anndata/                         # Single-cell data objects (raw/filtered/with_metadata)
+├── RDS/                             # Seurat objects for R analysis
+├── QC_file/                         # Quality control reports (MultiQC/FastQC)
+├── genome_annotation/               # Reference genome annotation files
+├── genome_ref/                      # Reference genome sequence
+├── info/                            # YAML configuration files (experiment/samples)
+└── meta/                            # Experimental metadata spreadsheets
 ```
 
 ## 📥 Data Preparation Steps (Preliminary)
@@ -91,7 +150,7 @@ Before starting the main analysis pipeline, several preliminary steps were neces
 - `download_script.sh` - Download raw FASTQ files with retry mechanism
 - `transfert_data_repo_to_repo.sh` - Transfer between storage locations
 
-**ℹ️ Info:** Starting from 4 bacterial libraries sequenced as paired-end reads, we downloaded the raw data files.
+**ℹ️ Info:** Starting from 4 demultiplexed bacterial libraries (BC_0076, BC_0077, BC_0079, BC_0080) sequenced as paired-end reads, we downloaded the raw data files.
 
 #### 0.2 Data Extraction and Decompression  
 **Purpose:** Extract compressed archives and decompress FASTQ files
@@ -160,12 +219,14 @@ Before starting the main analysis pipeline, several preliminary steps were neces
 
 ---
 
-### Step 2: Barcode Processing
-**Purpose:** Extract cell barcodes from the microSPLiT protocol
+### Step 2: Metadata Generation (Local)
+**Purpose:** Generate cell barcodes and metadata for STARsolo alignment and AnnData integration
 
 **Location:** `code/Local_analysis/1_barcode_processing.py`
 
-**Background:** microSPLiT uses 3 rounds of barcoding to uniquely identify each cell. This script extracts and filters these barcodes.
+**Background:** microSPLiT uses 3 rounds of barcoding to uniquely identify each cell. This script generates cell barcodes and creates metadata used in two key steps:
+1. **STARsolo alignment:** Provides barcode files for cell identification
+2. **AnnData integration:** Supplies experimental conditions metadata (M9 vs M9F, timepoints, replicates)
 
 **Usage:**
 ```bash
@@ -175,14 +236,14 @@ python 1_barcode_processing.py
 **Input:** `data/meta/metadata_DOL_rep1.xlsx`
 
 **Output:** 
-- `data/barcodes_result/barcodeSTARsolo/filtered/` - Clean barcodes for alignment
-- `data/barcodes_result/metadata_DOL_Exp1_complete.csv` - Cell metadata
+- `data/barcodes_result/barcodeSTARsolo/filtered/` - Clean barcodes for STARsolo alignment
+- `data/barcodes_result/metadata_DOL_Exp1_complete.csv` - Cell metadata with experimental conditions
 
-**ℹ️ Info:** This creates a "dictionary" that tells us which barcode combination corresponds to which cell.
+**ℹ️ Info:** This creates the essential link between barcode combinations, individual cells, and their experimental conditions (media type, timepoint, replicate).
 
 ---
 
-### Step 3: Read Trimming (Optional)
+### Step 3: Read Trimming
 **Purpose:** Remove adapters and low-quality sequences
 
 **Location:** `code/HPC_analysis/2_trimming/`
@@ -207,7 +268,7 @@ python 1_barcode_processing.py
 
 **Location:** `code/HPC_analysis/3_barcodes_and_alignment/STARsolo/`
 
-**Background:** This is the core step where we align reads to the *Pseudomonas* genome and count how many reads map to each gene in each cell.
+**Background:** This is the core step where we align reads to the *Pseudomonas* genome and count how many reads map to each gene in each cell. The 4 trimmed libraries (BC_0076, BC_0077, BC_0079, BC_0080) are merged into a single R1 file and a single R2 file before alignment.
 
 **Usage:**
 ```bash
@@ -248,47 +309,6 @@ python 2a_starsolo_to_anndata.py
 
 **ℹ️ Info:** Converts the data into AnnData format for Python-based analysis with Scanpy.
 
-#### 5b. R Format (Seurat RDS) - Optional
-**Purpose:** Convert filtered AnnData to Seurat format for R-based analysis
-
-**Location:** `code/Local_analysis/4a_anndata_to_RDS.py`
-
-**Prerequisites:** Must complete Steps 1-6 first (including filtering steps)
-
-**Usage:**
-```bash
-python 4a_anndata_to_RDS.py
-```
-
-**Input:** `data/Anndata/filtered/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c.h5ad`
-
-**Output:** `data/RDS/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c_SeuratV5.rds`
-
-**ℹ️ Info:** This script converts the filtered Python dataset to Seurat V5 format for researchers who prefer R-based analysis. The conversion preserves all cell and gene metadata, making it compatible with standard Seurat workflows.
-
-**R Usage Example:**
-```r
-# Load the converted dataset in R
-seurat_obj <- readRDS("data/RDS/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c_SeuratV5.rds")
-print(seurat_obj)
-
-# Access cell metadata (experimental conditions, etc.)
-head(seurat_obj@meta.data)
-
-# Access gene metadata
-head(seurat_obj[["RNA"]]@meta.data)
-
-# Standard Seurat workflow
-seurat_obj <- NormalizeData(seurat_obj)
-seurat_obj <- FindVariableFeatures(seurat_obj)
-seurat_obj <- ScaleData(seurat_obj)
-seurat_obj <- RunPCA(seurat_obj)
-seurat_obj <- FindNeighbors(seurat_obj)
-seurat_obj <- FindClusters(seurat_obj)
-seurat_obj <- RunUMAP(seurat_obj, dims = 1:10)
-```
-
----
 
 ### Step 6: Quality Filtering
 **Purpose:** Remove low-quality cells and genes
@@ -309,15 +329,36 @@ seurat_obj <- RunUMAP(seurat_obj, dims = 1:10)
    ```
    Removes doublets, low-quality cells based on multiple metrics
 
-3. **Gene filtering (3c):**
+3. **Advanced gene filtering (3c):**
    ```bash
    python 3c_filtering_advanced_gene.py
    ```
-   Removes lowly expressed genes
+   - Filters to protein-coding genes only
+   - Removes genes expressed in <5 cells (lowly expressed)
+   - Adds gene annotations for different expression thresholds (5%, 10%, 15%)
+   - Generates comprehensive filtering statistics and visualizations
 
 **Output:** `data/Anndata/filtered/` - High-quality single-cell dataset
 
 **ℹ️ Info:** This removes "bad" cells (e.g., dying cells, technical artifacts) and uninformative genes, keeping only reliable data for biological interpretation.
+
+---
+
+### Step 6b: R Format Conversion (Optional)
+**Purpose:** Convert filtered AnnData to Seurat format for R-based analysis
+
+**Location:** `code/Local_analysis/4a_anndata_to_RDS.py`
+
+**Usage:**
+```bash
+python 4a_anndata_to_RDS.py
+```
+
+**Input:** `data/Anndata/filtered/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c.h5ad`
+
+**Output:** `data/RDS/GeneFull_raw_unique_mult_with_metadata_grouped_filtered_100UMI_3c_SeuratV5.rds`
+
+**ℹ️ Info:** This script converts the filtered Python dataset to Seurat V5 format for researchers who prefer R-based analysis. The conversion preserves all cell and gene metadata, making it compatible with standard Seurat workflows.
 
 ---
 

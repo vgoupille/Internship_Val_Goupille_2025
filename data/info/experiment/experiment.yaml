@@ -1,9 +1,130 @@
-experiment_name: "microsplit_single_cell_split_pool_barcoding"
-sequencing_platform: "Novaseq"
-read_type: "Paired-end"
+# =====================================================================================
+# MicroSPLiT Single-Cell RNA-seq Experiment Configuration
+# =====================================================================================
+# This file documents the complete library structure and experimental protocol
+# for bacterial single-cell RNA sequencing using microSPLiT technology
+# =====================================================================================
 
-# Description of the library structure on the forward strand (5' -> 3')
-library_structure_forward_strand:
+experiment_info:
+  # Basic experiment identifiers
+  name: "microsplit_single_cell_split_pool_barcoding"
+  description: "Investigating intraspecific Division of Labor in Pseudomonas brassicacearum R401 under contrasting iron conditions"
+  
+  # Biological context
+  organism: "Pseudomonas brassicacearum R401"
+  organism_type: "Gram-negative bacterium"
+  ecological_niche: "Root colonizer and opportunistic plant pathogen"
+  host_plant: "Arabidopsis thaliana"
+  
+  # Research hypothesis
+  biological_hypothesis: >
+    Iron-limited conditions promote functional specialization among genetically identical PsR401 cells,
+    leading to subpopulations specializing in complementary metabolic tasks (toxin production, 
+    antimicrobial defense, siderophore-mediated iron acquisition) to enhance population-level fitness.
+  
+  # Key metabolites studied
+  target_exometabolites:
+    - name: "Brassicapeptin"
+      function: "Phytotoxin for pathogenicity and root colonization"
+    - name: "DAPG"
+      full_name: "2,4-diacetylphloroglucinol"
+      function: "Antimicrobial against competitors"
+    - name: "Pyoverdine"
+      function: "Siderophore for iron chelation"
+  
+  # Experimental design
+  experimental_design:
+    total_samples: 18
+    calculation: "2 media × 3 biological replicates × 3 timepoints"
+    
+    culture_conditions:
+      M9:
+        description: "Iron-limited, low glucose (stringent conditions)"
+        glucose_concentration: "Low"
+        iron_supplementation: "None"
+        stress_level: "High (stringent)"
+        growth_characteristics: "Limited growth, reaches plateau by T2"
+      M9F:
+        description: "Iron-replete, high glucose (permissive conditions)"  
+        glucose_concentration: "20 mM"
+        iron_supplementation: "100 µM FeCl3"
+        stress_level: "Low (permissive)"
+        growth_characteristics: "Higher growth rates, continued exponential growth"
+    
+    timepoints:
+      T1:
+        description: "Initial sampling point (identical for both conditions)"
+        OD_range_M9: "0.13-0.21"
+        OD_range_M9F: "0.13-0.21"
+        growth_phase: "Early exponential"
+      T2:
+        description: "Mid-growth sampling (condition-specific timing)"
+        OD_range_M9: "0.28-0.33"
+        OD_range_M9F: "0.59-0.63"
+        growth_phase_M9: "Approaching plateau"
+        growth_phase_M9F: "Active exponential growth"
+      T3:
+        description: "Late sampling (condition-specific timing)"
+        OD_range_M9: "0.26"
+        OD_range_M9F: "0.74-0.83"
+        growth_phase_M9: "Plateau phase"
+        growth_phase_M9F: "Continued exponential growth"
+    
+    biological_replicates: 3
+    replicate_labels: ["Rep A", "Rep B", "Rep C"]
+    technical_replicates_per_sample: 5
+    total_technical_replicates: 90
+    technical_replicate_calculation: "18 samples × 5 technical replicates each"
+    
+  # Technology and sequencing
+  technology:
+    method: "microSPLiT"
+    full_name: "microbial Split-Pool Ligation Transcriptomics"
+    advantages: 
+      - "High-throughput bacterial scRNA-seq"
+      - "No specialized equipment required"
+      - "Split-pool barcoding strategy"
+      - "Up to 820,800 unique barcode combinations"
+    
+  sequencing_info:
+    platform: "NovaSeq X Plus"
+    facility: "GenoA platform"
+    read_type: "Paired-end"
+    read_structure:
+      R1: "241 cycles (cDNA/biological content)"
+      R2: "91 cycles (barcodes + UMI)"
+      i7_index: "6 cycles"
+    concentration: "200 pM"
+    phix_spike: "20%"
+    
+    # Library indices for sequencing quality
+    sequencing_libraries:
+      BC_0076:
+        index: "CAGATC"
+        purpose: "Sequencing quality and balance"
+      BC_0077:
+        index: "ACTTGA"  
+        purpose: "Sequencing quality and balance"
+      BC_0079:
+        index: "TAGCTT"
+        purpose: "Sequencing quality and balance"
+      BC_0080:
+        index: "GGCTAC"
+        purpose: "Sequencing quality and balance"
+    
+  # Analysis scope
+  analysis_objectives:
+    primary: "Validate microSPLiT technology for bacterial systems"
+    secondary: "Test iron limitation hypothesis for metabolic specialization"
+    approach: "Single-cell transcriptomics to detect functional heterogeneity"
+    expected_outcome: "Identify subpopulations with specialized metabolic functions"
+
+# =====================================================================================
+# MICROSPLIT LIBRARY STRUCTURE
+# =====================================================================================
+# Complete description of the microSPLiT library construct from 5' to 3'
+
+microsplit_library_structure:
   - name: "Illumina_P5"
     sequence: "AATGATACGGCGACCACCGAGATCTACAC"
     length: 29
@@ -71,17 +192,19 @@ library_structure_forward_strand:
     length: 24
     description: "Illumina P7 adapter sequence"
 
+# =====================================================================================
+# SEQUENCING READ STRUCTURE
+# =====================================================================================
+
 read1_info:
   length_cycles: 241
-  description: "Read 1 sequences the cDNA region."
-  sequencing_start_after: # R1 starts after s5 and ME
-    - "s5"
-    - "ME"
+  description: "Read 1 sequences the cDNA region (biological content)"
+  sequencing_start_after: ["s5", "ME"]
   expected_primary_content: "cDNA"
-  potential_trailing_sequences: # If cDNA is short, R1 can read into these elements
+  potential_trailing_sequences: 
     - "polyA_or_random_hexamer"
     - "barcode_R1"
-    - "linker_R2"
+    - "linker_R2" 
     - "barcode_R2"
     - "linker_R3"
     - "barcode_R3"
@@ -91,47 +214,55 @@ read1_info:
     - name: "TSO_R1_artifact"
       sequence: "AAGCAGTGGTATCAACGCAGAGTGAATGGG"
       max_length: 31
-      description: "Full or partial Template Switching Oligo (TSO) sequence potentially found at the 5' end of R1 (approx. 5% of reads)."
+      description: "Template Switching Oligo found in ~5% of R1 reads"
 
 read2_info:
   length_cycles: 91
-  description: "Read 2 sequences barcodes and UMI from the 3' end of the library construct (5'->3' on the second strand)."
-  # Sequenced 5' -> 3' on the second strand, starting after the reverse complement of TruSeq_Read_2_adapter.
-  # The sequences listed here are as they appear in Read 2.
-  expected_content_ordered: # From base 1 of Read 2
-    - name: "UMI" # Bases 1-10
+  description: "Read 2 sequences cell barcodes and UMI (technical sequences)"
+  expected_content_ordered:
+    - name: "UMI" 
+      bases: "1-10"
       length: 10
       sequence_pattern: "N{10}"
-      notes: "This is the UMI sequence (reverse complement of the one on fwd strand definition if bases were specified)."
-    - name: "barcode_R3" # Bases 11-18
+      description: "Unique Molecular Identifier (reverse complement)"
+    - name: "barcode_R3"
+      bases: "11-18" 
       length: 8
       sequence_pattern: "N{8}"
-      notes: "This is Barcode R3 (reverse complement)."
-    - name: "linker_R3_rc" # Bases 19-48
-      sequence: "GTGGCCGATGTTTCGCATCGGCGTACGACT" # Reverse complement of linker_R3
+      description: "Round 3 Barcode (reverse complement)"
+    - name: "linker_R3_rc"
+      bases: "19-48"
+      sequence: "GTGGCCGATGTTTCGCATCGGCGTACGACT"
       length: 30
       description: "Round 3 Linker (reverse complement)"
-    - name: "barcode_R2" # Bases 49-56
+    - name: "barcode_R2"
+      bases: "49-56"
       length: 8
       sequence_pattern: "N{8}"
-      notes: "This is Barcode R2 (reverse complement)."
-    - name: "linker_R2_rc" # Bases 57-78
-      sequence: "ATCCACGTGCTTGAGACTGTGG" # Reverse complement of linker_R2
+      description: "Round 2 Barcode (reverse complement)"
+    - name: "linker_R2_rc"
+      bases: "57-78"
+      sequence: "ATCCACGTGCTTGAGACTGTGG"
       length: 22
       description: "Round 2 Linker (reverse complement)"
-    - name: "barcode_R1" # Bases 79-86
+    - name: "barcode_R1"
+      bases: "79-86"
       length: 8
       sequence_pattern: "N{8}"
-      notes: "This is Barcode R1 (reverse complement)."
-    - name: "supplemental_bases_R2_end" # Bases 87-91
+      description: "Round 1 Barcode (reverse complement)"
+    - name: "supplemental_bases_R2_end"
+      bases: "87-91"
       length: 5
       sequence_pattern: "N{5}"
-      description: "Additional 5 bases sequenced, potentially part of polyT (rc of polyA) or rc of random hexamer."
+      description: "Additional bases from polyT/random hexamer region"
 
 
-# Motifs on the forward strand, relevant for R1 trimming if cDNA is short.
-# Offsets are from the end of the cDNA.
-motifs_for_R1_trimming:
+# =====================================================================================
+# TRIMMING CONFIGURATION
+# =====================================================================================
+# Motifs and adapters for read trimming when cDNA is shorter than read length
+
+trimming_motifs:
   - name: "Round2_linker"
     sequence: "CCACAGTCTCAAGCACGTGGAT" # Forward strand sequence
     length: 22
@@ -194,44 +325,3 @@ general_artifacts:
     location_info: "Anywhere, potential Novaseq artifact."
     action: "Identify, potentially trim or filter read."
 
-# MicroSPLiT Trimming Pipeline Configuration
-
-# Input and output directories
-input_dir: "raw_data"
-output_dir: "trimmed_data"
-
-# Tool selection and configuration
-tools:
-  # Cutadapt configuration
-  cutadapt:
-    enabled: true
-    adapter_sequence: "AGATCGGAAGAGC"  # Illumina universal adapter
-    quality_cutoff: 20
-    min_length: 36
-    threads: 4
-
-  # Trimmomatic configuration
-  trimmomatic:
-    enabled: false
-    adapters_file: "/path/to/adapters.fa"  # Update this path
-    min_length: 36
-    quality_threshold: 20
-    sliding_window: "4:20"
-    threads: 4
-
-# Quality control settings
-quality_control:
-  fastqc:
-    enabled: true
-    threads: 4
-    output_dir: "qc_reports"
-
-# Logging configuration
-logging:
-  level: "INFO"
-  file: "trimming_pipeline.log"
-
-# Resource limits
-resources:
-  max_memory: "8G"
-  max_threads: 8
