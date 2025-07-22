@@ -111,6 +111,16 @@
   - Recommended to use for reference only, not as a final analysis workflow
 - `7_seurat.ipynb` - R/Seurat-based analysis (alternative workflow)
 
+### Interactive Development Notebooks:
+- `interactive_notebooks/` - Contains interactive versions of analysis scripts
+  - `Interactive - 0_growth_bacteria_fig.py.ipynb` - Interactive growth analysis
+  - `Interactive - 3a_filtering_100UMIs.py.ipynb` - Interactive UMI filtering
+  - `Interactive - 3b_filtering_advanced_cell_v2.py.ipynb` - Interactive cell filtering
+  - `Interactive - 3c_filtering_advanced_gene.py.ipynb` - Interactive gene filtering
+  - `Interactive - 4a_anndata_to_RDS.py.ipynb` - Interactive AnnData to RDS conversion
+  - `Interactive - 5_genome_transcriptome_description.py.ipynb` - Interactive genome/transcriptome analysis
+  - ℹ️ **Note:** These notebooks mirror the corresponding Python scripts but allow for interactive exploration and parameter testing
+
 ## 📁 Supporting Modules
 
 ### `BacSC/`

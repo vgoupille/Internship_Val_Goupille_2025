@@ -72,7 +72,7 @@ graph TD
 │       ├── 📄 4a_anndata_to_RDS.py      # Convert to Seurat format
 │       ├── 📄 6a-7_*.ipynb              # Analysis notebooks
 │       ├── 📁 BacSC/                   # Custom bacterial scRNA-seq module
-│       └── 📁 jupyter/                 # Interactive notebooks with visualizations
+│       └── 📁 interactive_notebooks/   # Interactive versions of analysis scripts
 ├── 📁 data/                            # All data organized by processing stage
 │   ├── 📁 subsampled_data/             # Test datasets (5000 reads)
 │   ├── 📁 barcodes_result/             # Cell barcode extraction results
@@ -104,7 +104,7 @@ graph TD
 
 **Python Scripts & Jupyter Integration:**
 - Most Python scripts in `code/Local_analysis/` are designed to work interactively
-- Corresponding Jupyter notebooks in `code/Local_analysis/jupyter/` provide:
+- Corresponding Jupyter notebooks in `code/Local_analysis/interactive_notebooks/` provide:
   - **Interactive execution** with cell-by-cell running
   - **Rich visualizations** (plots, graphs, interactive figures)
   - **Step-by-step exploration** of data processing
@@ -117,7 +117,7 @@ graph TD
 - Growth curves and experimental condition comparisons
 - Interactive exploration of single-cell data
 
-**ℹ️ Info:** For optimal analysis experience, use Jupyter Lab to open notebooks in `code/Local_analysis/jupyter/` - this allows you to see all visualizations and interact with the data processing steps.
+**ℹ️ Info:** For optimal analysis experience, use Jupyter Lab to open notebooks in `code/Local_analysis/interactive_notebooks/` - this allows you to see all visualizations and interact with the data processing steps.
 
 ### Data Organization
 
@@ -366,14 +366,17 @@ python 4a_anndata_to_RDS.py
 **Purpose:** Identify cell types, gene expression patterns, and biological insights
 
 #### Python-Based Analysis
-**Location:** `code/Local_analysis/jupyter/`
+**Location:** `code/Local_analysis/`
 
 **Main notebooks:**
 - `6a_scanpy.ipynb` - Standard single-cell analysis
 - `6b_Global_BacSC_tutorial_general_Val.ipynb` - Bacterial-specific analysis
 
+**Interactive development notebooks:**
+- `interactive_notebooks/` - Interactive versions of analysis scripts for step-by-step exploration
+
 #### R-Based Analysis (Alternative)
-**Notebook:** `code/Local_analysis/jupyter/7_seurat.ipynb`
+**Notebook:** `code/Local_analysis/7_seurat.ipynb`
 
 **ℹ️ Info:** For R users, you can use the RDS file generated in Step 5b with standard Seurat workflows or the provided Seurat notebook.
 
@@ -477,7 +480,8 @@ Use the full dataset by replacing `subsampled` with `unzipped` or using the merg
 - `data/RDS/` - Seurat objects for R analysis (optional)
 
 **Analysis:**
-- `code/Local_analysis/jupyter/` - Interactive analysis notebooks
+- `code/Local_analysis/` - Main analysis notebooks (6a, 6b, 7)
+- `code/Local_analysis/interactive_notebooks/` - Interactive development notebooks
 - `internship_deliverables/` - Final thesis and presentations
 
 ## ⚠️ Important Notes
