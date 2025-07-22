@@ -90,7 +90,8 @@ graph TD
 └── 📁 misc/                            # Supplementary materials
     ├── 📁 supplementary_code/          # Additional analysis scripts
     ├── 📁 interim_meetings/            # Meeting presentations
-    └── 📁 obsidian/                    # Research notes
+    ├── 📁 future_perspectives/         # Future research directions
+    └── 📁 info_internship/             # Internship information
 ```
 
 ### Core Directories
