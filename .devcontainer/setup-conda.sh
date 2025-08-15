@@ -25,11 +25,11 @@ conda install -n bioinfo_env -c conda-forge -c bioconda \
     pandas=2.2.3 \
     matplotlib=3.10.1 \
     seaborn=0.13.2 \
-    statsmodels=0.14.4 \
+    statsmodels=0.14.5 \
     numpy=2.2.5 \
     biopython=1.85 \
     scanpy=1.11.2 \
-    scipy=1.15.4 \
+    scipy=1.16.0 \
     anndata=0.11.4 -y
 
 # Install pip packages
