@@ -7,12 +7,15 @@
 
 # Source: https://renkun.me/2020/04/14/writing-r-in-vscode-working-with-multiple-r-sessions/
 Sys.setenv(TERM_PROGRAM = "vscode")
-source(file.path(
+init_file <- file.path(
     Sys.getenv(
         if (.Platform$OS.type == "windows") "USERPROFILE" else "HOME"
     ),
     ".vscode-R", "init.R"
-))
+)
+if (file.exists(init_file)) {
+    source(init_file)
+}
 
 # Source: https://github.com/REditorSupport/vscode-R/wiki/Plot-viewer#svg-in-httpgd-webpage
 if (interactive() && Sys.getenv("TERM_PROGRAM") == "vscode") {
