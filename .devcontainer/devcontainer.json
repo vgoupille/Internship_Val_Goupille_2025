@@ -69,8 +69,8 @@
         "purocean.drawio-preview",
         "RDebugger.r-debugger",
         "quarto.quarto",
-        "ms-azuretools.vscode-docker"
-        //"nextflow.nextflow",
+        "ms-azuretools.vscode-docker",
+        "Anthropic.claude-code"
       ]
     }
   },
