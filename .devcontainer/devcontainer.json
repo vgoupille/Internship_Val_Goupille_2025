@@ -75,7 +75,7 @@
     }
   },
   "remoteUser": "vscode",
-  "postCreateCommand": "conda init bash && conda env create -f .devcontainer/environment.yml && conda run -n bioinfo_env python -m ipykernel install --user --name=bioinfo_env --display-name='Python (bioinfo_env)' && cp .devcontainer/.Rprofile /home/vscode/.Rprofile && echo 'Container started successfully!'",
+  "postCreateCommand": "bash .devcontainer/setup-conda.sh",
   "postStartCommand": "until [ -f /home/vscode/.vscode-R/init.R ]; do sleep 0.1; done; radian"
 }
 // && sudo cp .devcontainer-simple/.Rprofile.site
