@@ -29,7 +29,7 @@ conda install -n bioinfo_env -c conda-forge -c bioconda \
     numpy=2.2.5 \
     biopython=1.85 \
     scanpy=1.11.2 \
-    scipy=1.16.0 \
+    scipy=1.15.4 \
     anndata=0.11.4 -y
 
 # Install pip packages
