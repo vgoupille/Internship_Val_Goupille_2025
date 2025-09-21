@@ -12,7 +12,7 @@ def _():
 
 @app.cell
 def _(mo):
-    mo.md(r"https://scanpy.readthedocs.io/en/stable/tutorials/basics/clustering.html")
+    mo.md(r"""https://scanpy.readthedocs.io/en/stable/tutorials/basics/clustering.html""")
     return
 
 
@@ -62,7 +62,6 @@ def _(data):
 @app.cell
 def _(data):
     data.obs.sample(10, random_state=42)   # aleatoire
-
     return
 
 
@@ -171,79 +170,123 @@ def _(data):
 
 
 @app.cell
-def _(data, sc):
-    # Normalize to median total counts and save in 'normalized' layer
-    data.layers["normalized"] = data.layers["counts"].copy()
-    sc.pp.normalize_total(data, layer="normalized", copy=False)  # target_sum=1000
-
-    # Log transform normalized data and save in 'log1p' layer
-    data.layers["log1p"] = data.layers["normalized"].copy()
-    sc.pp.log1p(data, layer="log1p", copy=False)
-
-    # Keep normalized and log-transformed data in main matrix
-    data.X = data.layers["log1p"].copy()
-    return
-
-
-@app.cell
 def _(data):
     data.layers
     return
 
 
 @app.cell
-def _():
-
-    # Identify highly variable genes using log1p normalized data
-    # This helps focus on genes with high cell-to-cell variation
-    # sc.pp.highly_variable_genes(
-    #     data,
-    #     n_top_genes=200,  # batch_key="sample"
-    # )
-    #sc.pl.highly_variable_genes(data)
+def _(mo):
+    mo.md(r"""On va devoir regarder chaque sous groupe de maniere indepednante""")
     return
 
 
 @app.cell
-def _(data, sc):
-    # Scale data and save in 'scaled' layer
-    data.layers["scaled"] = data.layers["log1p"].copy()
-    sc.pp.scale(data, max_value=10, zero_center=True, layer="scaled", copy=False)
-    # save it in the main matrix
-    data.X = data.layers["scaled"].copy()
+def _(data):
+    data_nm = data.copy()
+    return (data_nm,)
+
+
+@app.cell
+def _(data_nm, sc):
+    # Normalize to median total counts and save in 'normalized' layer
+    data_nm.layers["normalized"] = data_nm.layers["counts"].copy()
+    sc.pp.normalize_total(data_nm, layer="normalized", copy=False)  # target_sum=1000
+
+    # Log transform normalized data_nm and save in 'log1p' layer
+    data_nm.layers["log1p"] = data_nm.layers["normalized"].copy()
+    sc.pp.log1p(data_nm, layer="log1p", copy=False)
+
+    # Keep normalized and log-transformed data_nm in main matrix
+    data_nm.X = data_nm.layers["log1p"].copy()
     return
 
 
 @app.cell
-def _(data, sc):
-    sc.pl.highly_variable_genes(data)
+def _(data_nm):
+    data_nm.layers
+    return
+
+
+@app.cell
+def _(data_nm):
+    data_nm.var
+    return
+
+
+@app.cell
+def _(data_nm):
+    data_hvg = data_nm.copy()
+    return (data_hvg,)
+
+
+@app.cell
+def _(data_hvg, sc):
 
     #Identify highly variable genes using log1p normalized data
     #This helps focus on genes with high cell-to-cell variation
     sc.pp.highly_variable_genes(
-        data,
-        n_top_genes=200,  # batch_key="sample"
+        data_hvg,
+        n_top_genes=2000,  # batch_key="sample"
     )
+    data_hvg.var["highly_variable"]
     return
 
 
 @app.cell
-def _(data, sc):
-    sc.tl.pca(data)
+def _(data_hvg, sc):
+    sc.pl.highly_variable_genes(data_hvg) # visualize highly variable genes
     return
 
 
 @app.cell
-def _(data, sc):
-    sc.pl.pca_variance_ratio(data, n_pcs=50, log=True)
-    sc.pl.pca_variance_ratio(data, n_pcs=50, log=False)
+def _(data_hvg):
+    data_hvg_f = data_hvg[:, data_hvg.var.highly_variable]
+    data_hvg_f.var
+    return (data_hvg_f,)
+
+
+@app.cell
+def _(data_hvg_f):
+    data_hvg_f
     return
 
 
 @app.cell
-def _(data, sc):
+def _(data_hvg_f):
+    # create a new Anndata for the scalling 
+    data_hvg_f_sc = data_hvg_f.copy()
+    data_hvg_f_sc.layers["scaled"] = data_hvg_f_sc.layers["log1p"].copy()
+    return (data_hvg_f_sc,)
+
+
+@app.cell
+def _(data_hvg_f_sc, sc):
+    # Scale data and save in 'scaled' layer
+
+    sc.pp.scale(data_hvg_f_sc, max_value=10, zero_center=True, layer="scaled", copy=False)
+    # save it in the main matrix
+    data_hvg_f_sc.X = data_hvg_f_sc.layers["scaled"].copy()
+    return
+
+
+@app.cell
+def _(data_hvg_f_sc, sc):
+    sc.tl.pca(data_hvg_f_sc)
+    return
+
+
+@app.cell
+def _(data_hvg_f_sc, sc):
+    sc.pl.pca_variance_ratio(data_hvg_f_sc, n_pcs=50, log=True)
+    sc.pl.pca_variance_ratio(data_hvg_f_sc, n_pcs=50, log=False)
+    return
+
+
+@app.cell
+def _(data_hvg_f_sc, sc):
     sc.pl.pca(
-        data,
+        data_hvg_f_sc,
         ncols=2,
         color=["CultureMedium", "group", "OD", "total_counts"],
         alpha=1,
