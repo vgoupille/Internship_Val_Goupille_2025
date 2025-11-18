@@ -17,6 +17,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Load configuration if available
 if [ -f "$SCRIPT_DIR/config.sh" ]; then
     source "$SCRIPT_DIR/config.sh"
+    CONFIG_FILE="$SCRIPT_DIR/config.sh"
     echo "Configuration loaded from $SCRIPT_DIR/config.sh"
     # Set CONFIG_FILE to the config.sh path if not already set
     if [ -z "$CONFIG_FILE" ]; then

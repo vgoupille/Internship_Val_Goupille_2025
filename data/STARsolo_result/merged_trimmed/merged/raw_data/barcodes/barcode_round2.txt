@@ -1,0 +1,1 @@
+/projects/microsplit/Internship_Val_Goupille_2025/data/barcodes_result/barcodeSTARsolo/filtered/barcode_rd2_filtered.txt

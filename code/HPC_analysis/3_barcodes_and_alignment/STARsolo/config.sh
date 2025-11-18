@@ -31,7 +31,7 @@ CONDA_ENV_PATH="${BASE_PATH}/env/STARsolo_microSPLIT_DOL" # For the location of 
 SOURCE_FASTQ="${BASE_BIG_DATA}/merged_data"  # Chemin vers les données trimmed
 
 # for barcodes, genome_ref and genome_annotation here we use the file avaible in the repository (barcodes_result folder) :::::
-SOURCE_BARCODES="${BASE_PATH}/projects/microsplit/data/barcodes_result/barcodeSTARsolo/filtered"  # Chemin vers les barcodes filtrés
+SOURCE_BARCODES="${BASE_PATH}/data/barcodes_result/barcodeSTARsolo/filtered"  # Chemin vers les barcodes filtrés
 
 # Source barcode file names
 SOURCE_BARCODE_R1="barcode_rd1_filtered.txt"  # Nom du fichier de barcodes round 1

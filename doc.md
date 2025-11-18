@@ -30,3 +30,9 @@ il y a avait effectivement une erreur de chemin pour le yml de l'env, le chemin 
 
 
 cela me creer bien le script l'env conda : /projects/microsplit/Internship_Val_Goupille_2025/env/STARsolo_microSPLIT_DOL
+
+
+
+
+
+J'ai ensuite corrigé le fichier de config et submit qui contenait des erreurs de lien 
