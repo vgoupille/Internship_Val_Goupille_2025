@@ -12,9 +12,9 @@
 . /local/env/envconda.sh
 
 # Define paths
-BASE_PATH="/projects/microsplit"
+BASE_PATH="/projects/microsplit/Internship_Val_Goupille_2025"
 ENV_PATH="${BASE_PATH}/env/STARsolo_microSPLIT_DOL"
-YAML_FILE="${BASE_PATH}/scripts/4_barcodes_and_alignment/STARsolo/STARsolo_microSPLIT_DOL/script/pipeline/environment_STARsolo.yml"
+YAML_FILE="${BASE_PATH}/code/HPC_analysis/3_barcodes_and_alignment/STARsolo/environment_STARsolo.yml"
 
 echo "Creating/updating STARsolo environment..."
 echo "Environment path: $ENV_PATH"
