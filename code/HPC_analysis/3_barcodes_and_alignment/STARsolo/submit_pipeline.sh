@@ -4,10 +4,10 @@
 # This script submits the STARsolo pipeline with customizable SLURM parameters
 
 # Default values (will be overwritten by config.sh if exists)
-THREADS=32
-MEMORY="128G"
-MAX_RUNTIME="48:00:00"
-EMAIL="valentin.goupille@univ-rennes.fr"
+THREADS=64
+MEMORY="600G"
+MAX_RUNTIME="10-00:00:00"
+EMAIL="goupille.valentin@live.fr"
 ANALYSIS_NAME="STARsolo_microSPLIT_Pipeline"
 SLURM_PARTITION="bigmem"  # Partition SLURM par défaut
 

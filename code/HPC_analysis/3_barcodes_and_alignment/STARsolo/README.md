@@ -17,9 +17,8 @@ The pipeline is designed to process microSPLIT data with:
 1. **`config.sh`** - Central configuration file
 2. **`starsolo_microsplit_pipeline.sh`** - Main pipeline script
 3. **`submit_pipeline.sh`** - SLURM submission wrapper
-4. **`run_all_samples.sh`** - Execution for all samples
-5. **`create_env_STARsolo.sh`** - Conda environment creation
-6. **`environment_STARsolo.yml`** - Environment specification
+4. **`create_env_STARsolo.sh`** - Conda environment creation
+5. **`environment_STARsolo.yml`** - Environment specification
 
 ### Workflow
 
@@ -59,18 +58,6 @@ sbatch create_env_STARsolo.sh
 sbatch starsolo_microsplit_pipeline.sh
 ```
 
-### 4. All Samples Execution
-
-```bash
-# All samples
-sbatch run_all_samples.sh
-
-# Specific sample
-sbatch run_all_samples.sh --sample BC_0076
-
-# With specific partition
-sbatch run_all_samples.sh --partition bigmem
-```
 
 ## STARsolo Parameters
 
@@ -131,31 +118,6 @@ output_directory/
 │           └── GeneFull/                   # Exon count matrices
 ```
 
-## Logic Analysis
-
-### ✅ Strengths
-
-1. **Modularity**: Clear separation of responsibilities
-2. **Flexibility**: Configurable parameters via config.sh
-3. **Error Handling**: Verification at each step
-4. **Multi-sample Support**: Batch processing capability
-5. **Isolated Environment**: Clean conda management
-
-### ⚠️ Previously Identified Issues (Now Fixed)
-
-1. **~~Hardcoded Paths~~**: ✅ Fixed obsolete path references
-2. **~~Redundancy~~**: ✅ Removed redundant environment creation 
-3. **~~Template Configuration~~**: ✅ Separated templates from real values
-4. **~~Error Handling~~**: ✅ Added robust validation and informative messages
-
-### 🔧 Recent Improvements Implemented
-
-1. **✅ Clean Paths**: Fixed `SOURCE_GENOME_ANNOTATION` path in config.sh
-2. **✅ Separate Logic**: Removed environment creation from main pipeline
-3. **✅ Robust Validation**: Added comprehensive input file validation
-4. **✅ Better Error Messages**: Informative errors with troubleshooting hints
-5. **✅ Configuration Clarity**: Clear separation of templates and actual values
-
 ## Recommended Resources
 
 - **CPU**: 64 threads minimum (32 may be insufficient)
@@ -193,41 +155,7 @@ ls -la /projects/microsplit/data/processed_data/merged_data/trimmed/
 ls -la /projects/microsplit/data/raw_data/barcodes/barcodeSTARsolo/filtered/
 ```
 
-## Testing Improvements
 
-After the improvements, you can test the pipeline and its new validation features:
-
-```bash
-# 1. Verify configuration
-source config.sh
-echo "Configuration loaded for: $ANALYSIS_NAME"
-
-# 2. Test YAML validation (will validate file structure)
-./run_all_samples.sh --sample BC_0076 --type merged_trimmed
-
-# 3. Test input file validation (runs automatically in pipeline)
-# The pipeline will now validate all input files before processing
-# and stop gracefully with helpful error messages if files are missing
-
-# 4. Test with intentionally wrong paths to see error handling
-# Edit config.sh temporarily with wrong paths to test validation
-```
-
-### 🧪 New Validation Features You Can Test
-
-- **YAML Structure Validation**: Try with malformed YAML files
-- **File Existence Checks**: Test with missing FASTQ or barcode files  
-- **Environment Validation**: Test without creating conda environment first
-- **Path Validation**: Test with incorrect file paths in config.sh
-- **Permissions Checks**: Test with unreadable files
-
-### Applied Improvements ✨
-
-1. **✅ Corrected Paths**: Fixed `SOURCE_GENOME_ANNOTATION` path
-2. **✅ Optimized Environment**: Removed redundant environment creation
-3. **✅ Robust Validation**: Systematic verification of YAML and input files
-4. **✅ Clear Configuration**: Separation of templates and real values
-5. **✅ Improved Error Handling**: More informative error messages
 
 ## Support
 

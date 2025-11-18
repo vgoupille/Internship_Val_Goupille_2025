@@ -6,14 +6,14 @@
 #SBATCH --cpus-per-task=32
 #SBATCH --mem=600G
 #SBATCH --time=48:00:00
-#SBATCH --output=/projects/microsplit/scripts/4_barcodes_and_alignment/STARsolo/STARsolo_microSPLIT_DOL/logs/starsolo_pipeline_%j.out
-#SBATCH --error=/projects/microsplit/scripts/4_barcodes_and_alignment/STARsolo/STARsolo_microSPLIT_DOL/logs/starsolo_pipeline_%j.err
+#SBATCH --output=/projects/microsplit/logs/starsolo_pipeline_%j.out
+#SBATCH --error=/projects/microsplit/logs/starsolo_pipeline_%j.err
 
 # === STARsolo Pipeline Master Script ===
 # This script runs the complete STARsolo analysis pipeline for microSPLIT scRNA-seq data
 
 # Create logs directory if it doesn't exist
-LOGS_DIR="/projects/microsplit/scripts/4_barcodes_and_alignment/STARsolo/STARsolo_microSPLIT_DOL/logs"
+LOGS_DIR="/projects/microsplit/logs"
 mkdir -p "$LOGS_DIR" || {
     echo "ERROR: Failed to create logs directory: $LOGS_DIR"
     exit 1
@@ -44,8 +44,7 @@ echo "$(date) - Creating base directory structure..."
 mkdir -p "$BASE_DIR"
 echo "Base directory created or already exists: $BASE_DIR"
 
-# Note: SLURM parameters are now handled by the submit_pipeline.sh wrapper
-# No need to update SLURM parameters here as they are passed via sbatch command
+
 echo "Using SLURM parameters provided at submission time."
 
 # Function to check if a script completed successfully
