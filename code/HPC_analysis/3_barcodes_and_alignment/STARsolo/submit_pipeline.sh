@@ -18,6 +18,10 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 if [ -f "$SCRIPT_DIR/config.sh" ]; then
     source "$SCRIPT_DIR/config.sh"
     echo "Configuration loaded from $SCRIPT_DIR/config.sh"
+    # Set CONFIG_FILE to the config.sh path if not already set
+    if [ -z "$CONFIG_FILE" ]; then
+        CONFIG_FILE="$SCRIPT_DIR/config.sh"
+    fi
 fi
 
 # Help function
@@ -25,6 +29,7 @@ show_help() {
     echo "Usage: $0 [options]"
     echo "Options:"
     echo "  -h, --help                Show this help message"
+    echo "  -c, --config FILE         Set configuration file (default: $SCRIPT_DIR/config.sh)"
     echo "  -t, --threads N           Set number of CPU threads (default: $THREADS)"
     echo "  -m, --memory SIZE         Set memory allocation (default: $MEMORY)"
     echo "  -r, --runtime HH:MM:SS    Set maximum runtime (default: $MAX_RUNTIME)"
@@ -33,6 +38,7 @@ show_help() {
     echo "  -p, --partition PART      Set SLURM partition (default: $SLURM_PARTITION)"
     echo ""
     echo "Example: $0 --threads 32 --memory 64G --runtime 12:00:00 --partition bigmem"
+    echo "Example: $0 --config /path/to/custom_config.sh --threads 64"
 }
 
 # Parse command line arguments
@@ -42,6 +48,10 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             show_help
             exit 0
+            ;;
+        -c|--config)
+            CONFIG_FILE="$2"
+            shift 2
             ;;
         -t|--threads)
             THREADS="$2"

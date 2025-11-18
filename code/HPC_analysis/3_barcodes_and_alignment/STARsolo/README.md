@@ -51,12 +51,17 @@ sbatch create_env_STARsolo.sh
 ### 3. Single Sample Execution
 
 ```bash
-# Recommended method
+# Recommended method (uses default config.sh)
 ./submit_pipeline.sh --threads 64 --memory 500G --runtime 10-00:00:00
 
-# Or directly with sbatch
+# With custom configuration file
+./submit_pipeline.sh --config /path/to/custom_config.sh --threads 64 --memory 500G
+
+# Or directly with sbatch (requires CONFIG_FILE environment variable)
 sbatch starsolo_microsplit_pipeline.sh
 ```
+
+**Note**: The `submit_pipeline.sh` wrapper automatically sets the `CONFIG_FILE` environment variable to point to `config.sh` in the same directory. You can override this with the `--config` option if needed.
 
 
 ## STARsolo Parameters
