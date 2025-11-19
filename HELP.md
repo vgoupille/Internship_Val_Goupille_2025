@@ -5,11 +5,10 @@
     - Solène souhaite relancer l'analyse sur sur le cluster (HPC)
     
 - solution : 
-    - j'ai renommer /projects/microsplit/data  en /projects/microsplit/big_data
-        - ce dossier contient les données lourdes (fastq et autres données issues de l'analyse sur HPC durant mon stage, ces données ne sont pas présentes sur mon repo git) 
     - j'ai cloné sur le cluster mon repo git Internship_Val_Goupille_2025 : 
 /projects/microsplit/Internship_Val_Goupille_2025
-    - j'ai renommé un dossier => le dossier "/projects/microsplit/big_data" anciennement nommé "data" contient les données lourdes (fastq et autres données issues de l'analyse sur HPC durant mon stage, ces données ne sont pas présentes sur mon repo git) 
+    - j'ai renommer /projects/microsplit/data  en /projects/microsplit/big_data
+        - ce dossier contient les données lourdes (fastq et autres données issues de l'analyse sur HPC durant mon stage, ces données ne sont pas présentes sur mon repo git) 
     - ne pas le confondre avec /projects/microsplit/Internship_Val_Goupille_2025/data qui est le dossier qui contient les autres data utiles pour lancer les scripts mais peu lourdes commes le genome, annotations, barcodes... (données au sein du repo : Internship_Val_Goupille_2025)
 
     - Si tu souhaites relancer les analyses HPC : 
