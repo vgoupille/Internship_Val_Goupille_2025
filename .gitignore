@@ -56,3 +56,5 @@ env/
 .DS_Store
 **/.DS_Store
 
+# ignore starsolo 
+Output_DOL_microsplit_starsolo
